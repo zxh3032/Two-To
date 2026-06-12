@@ -1,12 +1,27 @@
 # Two-To Web 前端工程说明
 
-`frontend` 是 Two-To 的 Web 前端工程目录。前端优先使用 React 构建，工程分层采用“应用入口 + 页面 + 功能模块 + 领域实体 + 共享能力”的方式组织，目标是在项目早期保持足够清晰，后续功能变多时也能自然扩展。
+`frontend` 是 Two-To 的 Web 前端工程目录。当前技术栈为 Vite + React + TypeScript + React Router + TanStack Query，工程分层采用“应用入口 + 页面 + 功能模块 + 领域实体 + 共享能力”的方式组织，目标是在项目早期保持足够清晰，后续功能变多时也能自然扩展。
+
+## 常用命令
+
+```bash
+npm install
+npm run dev
+npm run lint
+npm run test
+npm run build
+```
+
+前端默认访问 `VITE_API_BASE_URL` 指向的后端地址，本地默认值是 `http://localhost:8080`。
 
 ## 目录结构
 
 ```text
 frontend/
   public/               # 静态资源，构建时原样输出
+  index.html            # Vite HTML 入口
+  package.json          # npm 依赖与脚本
+  vite.config.ts        # Vite、React、Vitest 配置
   src/
     app/                # 应用初始化、路由、全局 Provider、全局布局
     pages/              # 路由页面，负责组装 feature 和 entity 展示
@@ -101,11 +116,21 @@ app -> pages -> features -> entities -> shared
 - `features` 不直接依赖其他不相关 feature，跨功能复用时下沉到 `entities` 或 `shared`。
 - `pages` 只做页面装配，不承担核心业务规则。
 
+## 当前已落地
+
+| 能力 | 目录 |
+| --- | --- |
+| 开发控制台首页 | `pages/home` |
+| 项目口号展示 | `features/project-slogan`、`shared/api/system.ts` |
+| 后端 ping 联通检测 | `features/api-health-check`、`shared/api/system.ts` |
+| 全局路由与布局 | `src/app` |
+| 全局样式变量 | `shared/styles` |
+
 ## 首期功能落点
 
 | 功能 | 建议目录 |
 | --- | --- |
-| 首页与产品介绍 | `pages/home` |
+| 首页与控制台 | `pages/home` |
 | 适配性测评 | `features/pet-matching`、`entities/assessment` |
 | 品种解析 | `features/breed-guide`、`entities/breed` |
 | 宠物档案 | `features/pet-profile`、`entities/pet` |
