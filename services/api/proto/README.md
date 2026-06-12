@@ -2,6 +2,8 @@
 
 本目录用于存放由根目录 `proto/` 生成的 Go 结构。
 
+如果要看手写的接口源定义，请看仓库根目录 `proto/`。本目录下的 `*.pb.go` 是生成物。
+
 约定：
 
 - 不手写 `*.pb.go`。
@@ -17,8 +19,8 @@
 
 ```go
 func List(ctx *gin.Context) {
-    request := &proto.BreedListRequest{}
-    response := &proto.BreedListResponse{}
+    request := &proto.ExamplePetDetailRequest{}
+    response := &proto.ExamplePetDetailResponse{}
     // 解析 request，调用 page 层，输出 response
 }
 ```

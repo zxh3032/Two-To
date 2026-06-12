@@ -92,8 +92,8 @@ Controller 典型形态：
 
 ```go
 func List(ctx *gin.Context) {
-    request := &proto.BreedListRequest{}
-    response := &proto.BreedListResponse{}
+    request := &proto.ExamplePetDetailRequest{}
+    response := &proto.ExamplePetDetailResponse{}
     // 解析 request，调用 page 层，输出 response
 }
 ```
