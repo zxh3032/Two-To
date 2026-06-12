@@ -12,7 +12,7 @@ npm run test
 npm run build
 ```
 
-前端默认访问 `VITE_API_BASE_URL` 指向的后端地址，本地默认值是 `http://localhost:8080`。
+前端默认访问 `VITE_API_BASE_URL` 指向的后端地址，本地默认值是 `http://localhost:0806`。
 
 ## 目录结构
 
