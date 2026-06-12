@@ -19,7 +19,7 @@ func Load() Config {
 	return Config{
 		AppName:  envOrDefault("TWO_TO_APP_NAME", "two-to-api"),
 		Env:      strings.ToLower(envOrDefault("TWO_TO_ENV", "development")),
-		HTTPAddr: envOrDefault("TWO_TO_HTTP_ADDR", ":8080"),
+		HTTPAddr: envOrDefault("TWO_TO_HTTP_ADDR", ":0806"),
 		LogLevel: envOrDefault("TWO_TO_LOG_LEVEL", "debug"),
 		MySQLDSN: os.Getenv("TWO_TO_MYSQL_DSN"),
 	}

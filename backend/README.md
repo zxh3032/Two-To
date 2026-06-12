@@ -28,7 +28,7 @@ GOOS=linux GOARCH=amd64 go test ./...
 ./scripts/gen-proto.sh
 ```
 
-后端默认监听 `:8080`。如果 `TWO_TO_MYSQL_DSN` 为空，服务会跳过数据库初始化，便于先跑通 API 骨架和前后端联调。
+后端默认监听 `:0806`。如果 `TWO_TO_MYSQL_DSN` 为空，服务会跳过数据库初始化，便于先跑通 API 骨架和前后端联调。
 
 ## 目录结构
 
