@@ -1,6 +1,6 @@
 # Two-To API 后端工程说明
 
-`services/api` 是 Two-To 的 Go 后端 API 服务目录。后端分层参考了本机代码库 `/Users/zhouxuhao/baidu/educloud/elderly-ai-care-agent_master` 的组织方式，保留其清晰的调用链和职责拆分：
+`backend` 是 Two-To 的 Go 后端 API 服务目录。后端分层参考了本机代码库 `/Users/zhouxuhao/baidu/educloud/elderly-ai-care-agent_master` 的组织方式，保留其清晰的调用链和职责拆分：
 
 ```text
 routers -> controllers -> models/page -> models/data -> models/dao
@@ -17,19 +17,19 @@ routers -> controllers -> models/page -> models/data -> models/dao
 
 Two-To 会沿用这个分层思想，但避免直接绑定参考仓库中的公司内部 servlet/resident 框架。项目早期优先使用清晰、轻量的 Go HTTP API 组织方式，同时保留 proto 作为请求参数和返回值的统一契约。
 
-本项目会保留参考仓库中“请求参数和返回值由 proto 定义”的方式。根目录 `proto/` 是前后端共享的接口契约源，后端通过脚本生成 Go 结构到 `services/api/proto/`，controller 使用生成后的 `XxxRequest` 和 `XxxResponse`。
+本项目会保留参考仓库中“请求参数和返回值由 proto 定义”的方式。`backend/proto/` 是后端接口契约目录，里面同时放 `.proto` 源文件和 Go 生成物 `*.pb.go`，controller 使用生成后的 `XxxRequest` 和 `XxxResponse`。
 
 ## 目录结构
 
 ```text
-services/api/
+backend/
   go.mod
   go.sum
   cmd/
     two-to-api/         # API 服务启动入口
   routers/              # 路由注册与接口分组
   controllers/          # HTTP controller，负责请求解析、响应输出
-  proto/                # 由根目录 proto/ 生成的 Go 请求/响应结构
+  proto/                # 接口 proto 源文件和 Go 生成物
   models/
     page/               # 业务编排层，对应一次用户请求或业务用例
     data/               # 数据访问层，封装查询、写入、事务和数据组合
@@ -218,13 +218,13 @@ cmd
 
 调整：
 
-- proto 文件不放在后端私有目录，而是放在仓库根目录 `proto/`，作为前后端共享契约源。
-- 后端生成物放在 `services/api/proto/`，前端生成物放在 `apps/web/src/shared/proto/`。
+- proto 文件放在后端目录 `backend/proto/`，与参考代码库保持一致。
+- 后续如果需要给前端生成 TypeScript 类型，生成物放在 `frontend/src/shared/proto/`。
 
 ## 新增接口开发流程
 
-1. 在根目录 `proto/` 中定义 `XxxRequest` 和 `XxxResponse`。
-2. 执行 `./scripts/gen-proto.sh` 生成后端 Go 结构。
+1. 在 `backend/proto/` 中定义 `XxxRequest` 和 `XxxResponse`。
+2. 执行 `./backend/scripts/gen-proto.sh` 生成后端 Go 结构。
 3. 在 `routers` 中注册接口路径。
 4. 在 `controllers/{module}` 中创建薄 controller，并使用生成后的 proto request/response。
 5. 在 `models/page/{module}` 中实现业务编排。

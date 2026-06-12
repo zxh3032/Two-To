@@ -1,4 +1,4 @@
-module github.com/zxh3032/two-to/services/api
+module github.com/zxh3032/two-to/backend
 
 go 1.24.4
 

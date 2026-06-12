@@ -4,9 +4,9 @@
 
 ## 当前文档
 
-- [接口 Proto 契约](../../proto/README.md)
-- [前端工程说明](../../apps/web/README.md)
-- [后端工程说明](../../services/api/README.md)
+- [接口 Proto 契约](../../backend/proto/README.md)
+- [前端工程说明](../../frontend/README.md)
+- [后端工程说明](../../backend/README.md)
 
 ## 技术原则
 

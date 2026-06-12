@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROTO_DIR="${ROOT_DIR}/proto"
-GO_OUT_DIR="${ROOT_DIR}/services/api/proto"
+BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROTO_DIR="${BACKEND_DIR}/proto"
+GO_OUT_DIR="${BACKEND_DIR}/proto"
 
 mkdir -p "${GO_OUT_DIR}"
 rm -f "${GO_OUT_DIR}"/*.pb.go

@@ -21,6 +21,7 @@
 | 2026-06-12 | 文档体系 | 新增功能迭代记录文档 | 已完成 | 建立后续功能开发时间节点与状态流转记录入口。 |
 | 2026-06-12 | 技术架构 | 建立前端与后端工程目录，并沉淀架构说明 | 已完成 | 前端采用按应用、页面、功能、实体、共享能力分层；后端参考 elderly-ai-care-agent 的 routers/controllers/page/data/dao 分层。 |
 | 2026-06-12 | 接口契约 | 新增 proto 契约目录和生成目录 | 已完成 | 请求参数和返回值统一通过 proto 定义，后端生成 Go 结构，前端预留 TypeScript 生成目录。 |
+| 2026-06-12 | 目录收敛 | 调整为 frontend、backend、docs 三段式目录 | 已完成 | proto 与生成脚本收敛到 backend 目录，删除根目录 proto/scripts 和 apps/services 多层包装。 |
 
 ## 功能规划池
 

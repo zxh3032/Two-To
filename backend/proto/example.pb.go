@@ -217,7 +217,7 @@ const file_example_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\x03R\x06userId\"P\n" +
 	"\x18ExamplePetDetailResponse\x124\n" +
-	"\x04item\x18\x01 \x01(\v2 .twoto.example.v1.ExamplePetItemR\x04itemB4Z2github.com/zxh3032/two-to/services/api/proto;protob\x06proto3"
+	"\x04item\x18\x01 \x01(\v2 .twoto.example.v1.ExamplePetItemR\x04itemB/Z-github.com/zxh3032/two-to/backend/proto;protob\x06proto3"
 
 var (
 	file_example_proto_rawDescOnce sync.Once

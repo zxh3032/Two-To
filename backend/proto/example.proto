@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package twoto.example.v1;
 
-option go_package = "github.com/zxh3032/two-to/services/api/proto;proto";
+option go_package = "github.com/zxh3032/two-to/backend/proto;proto";
 
 message ExamplePetItem {
   // @inject_tag: json:"id"
