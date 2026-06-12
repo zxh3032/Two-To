@@ -7,6 +7,7 @@
 - [接口 Proto 契约](../../backend/proto/README.md)
 - [前端工程说明](../../frontend/README.md)
 - [后端工程说明](../../backend/README.md)
+- [本地开发环境说明](本地开发环境说明.md)
 
 ## 技术原则
 
@@ -15,12 +16,13 @@
 - 请求参数和返回值使用 proto 统一定义，再分别生成前端、后端类型。
 - 文档和代码同步提交，重要目录、分层、接口约定都需要在文档中留下记录。
 - 后端分层参考 `/Users/zhouxuhao/baidu/educloud/elderly-ai-care-agent_master`，但不照搬历史框架依赖，保留清晰职责边界即可。
+- 前端当前采用 Vite + React + TypeScript + React Router + TanStack Query。
+- 后端当前采用 Gin + GORM MySQL + zap。
 
 ## 后续建议补充
 
 - API 接口规范。
 - 数据库表设计。
 - 登录与账号体系设计。
-- 本地开发环境启动说明。
 - 部署与发布流程。
 - 前后端联调规范。

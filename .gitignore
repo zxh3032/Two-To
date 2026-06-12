@@ -1,0 +1,34 @@
+# macOS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# 环境变量，只保留示例文件
+.env
+.env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# 日志与临时文件
+*.log
+tmp/
+temp/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.vite/
+frontend/.vitest/
+frontend/node_modules/.tmp/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Go / backend
+backend/bin/
+backend/tmp/
+backend/*.test
+backend/coverage.out

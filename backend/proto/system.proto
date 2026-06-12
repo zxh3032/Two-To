@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package twoto.system.v1;
+
+option go_package = "github.com/zxh3032/two-to/backend/proto;proto";
+
+message PingRequest {
+  // @inject_tag: json:"requestId"
+  // request_id 是本次请求的链路追踪 ID，由中间件生成或透传。
+  string request_id = 1;
+}
+
+message PingResponse {
+  // @inject_tag: json:"message"
+  // message 表示当前接口的探活结果，正常情况下返回 pong。
+  string message = 1;
+  // @inject_tag: json:"service"
+  // service 表示响应本次请求的后端服务名。
+  string service = 2;
+  // @inject_tag: json:"environment"
+  // environment 表示当前服务运行环境，例如 development、test、production。
+  string environment = 3;
+  // @inject_tag: json:"requestId"
+  // request_id 用于前后端联调和线上日志排查。
+  string request_id = 4;
+  // @inject_tag: json:"timestamp"
+  // timestamp 表示服务生成响应时的 Unix 秒级时间戳。
+  int64 timestamp = 5;
+}
+
+message SloganRequest {
+  // @inject_tag: json:"requestId"
+  // request_id 是本次请求的链路追踪 ID，由中间件生成或透传。
+  string request_id = 1;
+}
+
+message SloganResponse {
+  // @inject_tag: json:"slogan"
+  // slogan 表示 Two-To 项目面向用户展示的核心口号。
+  string slogan = 1;
+  // @inject_tag: json:"requestId"
+  // request_id 用于前后端联调和线上日志排查。
+  string request_id = 2;
+}
