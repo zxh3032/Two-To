@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package twoto.pet.v1;
+
+import "common.proto";
+
+option go_package = "github.com/zxh3032/two-to/services/api/proto;proto";
+
+message PetProfileItem {
+  // @inject_tag: json:"id"
+  int64 id = 1;
+  // @inject_tag: json:"userId"
+  int64 user_id = 2;
+  // @inject_tag: json:"name"
+  string name = 3;
+  // @inject_tag: json:"petType"
+  string pet_type = 4;
+  // @inject_tag: json:"breedId"
+  int64 breed_id = 5;
+  // @inject_tag: json:"gender"
+  string gender = 6;
+  // @inject_tag: json:"birthday"
+  string birthday = 7;
+  // @inject_tag: json:"avatar"
+  string avatar = 8;
+  // @inject_tag: json:"createdAt"
+  int64 created_at = 9;
+  // @inject_tag: json:"updatedAt"
+  int64 updated_at = 10;
+}
+
+message PetCreateRequest {
+  // @inject_tag: json:"profile"
+  PetProfileItem profile = 1;
+}
+
+message PetCreateResponse {
+  // @inject_tag: json:"profile"
+  PetProfileItem profile = 1;
+}
+
+message PetUpdateRequest {
+  // @inject_tag: json:"profile"
+  PetProfileItem profile = 1;
+}
+
+message PetUpdateResponse {
+  // @inject_tag: json:"profile"
+  PetProfileItem profile = 1;
+}
+
+message PetDetailRequest {
+  // @inject_tag: json:"id"
+  int64 id = 1;
+  // @inject_tag: json:"userId"
+  int64 user_id = 2;
+}
+
+message PetDetailResponse {
+  // @inject_tag: json:"profile"
+  PetProfileItem profile = 1;
+}
+
+message PetListRequest {
+  // @inject_tag: json:"userId"
+  int64 user_id = 1;
+  // @inject_tag: json:"page"
+  twoto.common.v1.PageRequest page = 2;
+}
+
+message PetListResponse {
+  // @inject_tag: json:"page"
+  twoto.common.v1.PageMeta page = 1;
+  // @inject_tag: json:"data"
+  repeated PetProfileItem data = 2;
+}

@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package twoto.user.v1;
+
+option go_package = "github.com/zxh3032/two-to/services/api/proto;proto";
+
+message UserProfileItem {
+  // @inject_tag: json:"id"
+  int64 id = 1;
+  // @inject_tag: json:"nickname"
+  string nickname = 2;
+  // @inject_tag: json:"avatar"
+  string avatar = 3;
+  // @inject_tag: json:"email"
+  string email = 4;
+  // @inject_tag: json:"createdAt"
+  int64 created_at = 5;
+}
+
+message UserPreferenceItem {
+  // @inject_tag: json:"livingSpace"
+  string living_space = 1;
+  // @inject_tag: json:"dailyFreeTime"
+  string daily_free_time = 2;
+  // @inject_tag: json:"activityLevel"
+  string activity_level = 3;
+  // @inject_tag: json:"careExperience"
+  string care_experience = 4;
+  // @inject_tag: json:"preferredPetTypes"
+  repeated string preferred_pet_types = 5;
+}
+
+message UserProfileDetailRequest {
+  // @inject_tag: json:"userId"
+  int64 user_id = 1;
+}
+
+message UserProfileDetailResponse {
+  // @inject_tag: json:"profile"
+  UserProfileItem profile = 1;
+  // @inject_tag: json:"preference"
+  UserPreferenceItem preference = 2;
+}
+
+message UserPreferenceUpdateRequest {
+  // @inject_tag: json:"userId"
+  int64 user_id = 1;
+  // @inject_tag: json:"preference"
+  UserPreferenceItem preference = 2;
+}
+
+message UserPreferenceUpdateResponse {
+  // @inject_tag: json:"preference"
+  UserPreferenceItem preference = 1;
+}

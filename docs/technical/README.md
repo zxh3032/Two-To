@@ -4,6 +4,7 @@
 
 ## 当前文档
 
+- [接口 Proto 契约](../../proto/README.md)
 - [前端工程说明](../../apps/web/README.md)
 - [后端工程说明](../../services/api/README.md)
 
@@ -11,6 +12,7 @@
 
 - Web 端优先，先保证核心体验闭环，再扩展小程序或 App。
 - 前后端在一个 monorepo 中统一管理，方便早期联动开发。
+- 请求参数和返回值使用 proto 统一定义，再分别生成前端、后端类型。
 - 文档和代码同步提交，重要目录、分层、接口约定都需要在文档中留下记录。
 - 后端分层参考 `/Users/zhouxuhao/baidu/educloud/elderly-ai-care-agent_master`，但不照搬历史框架依赖，保留清晰职责边界即可。
 

@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package twoto.assessment.v1;
+
+import "common.proto";
+
+option go_package = "github.com/zxh3032/two-to/services/api/proto;proto";
+
+message AssessmentQuestionItem {
+  // @inject_tag: json:"id"
+  int64 id = 1;
+  // @inject_tag: json:"title"
+  string title = 2;
+  // @inject_tag: json:"description"
+  string description = 3;
+  // @inject_tag: json:"questionType"
+  string question_type = 4;
+  // @inject_tag: json:"options"
+  repeated AssessmentOptionItem options = 5;
+}
+
+message AssessmentOptionItem {
+  // @inject_tag: json:"value"
+  string value = 1;
+  // @inject_tag: json:"label"
+  string label = 2;
+  // @inject_tag: json:"description"
+  string description = 3;
+}
+
+message AssessmentAnswerItem {
+  // @inject_tag: json:"questionId"
+  int64 question_id = 1;
+  // @inject_tag: json:"values"
+  repeated string values = 2;
+}
+
+message AssessmentResultItem {
+  // @inject_tag: json:"id"
+  int64 id = 1;
+  // @inject_tag: json:"userId"
+  int64 user_id = 2;
+  // @inject_tag: json:"summary"
+  string summary = 3;
+  // @inject_tag: json:"recommendedBreedIds"
+  repeated int64 recommended_breed_ids = 4;
+  // @inject_tag: json:"createdAt"
+  int64 created_at = 5;
+}
+
+message AssessmentQuestionListRequest {
+  // @inject_tag: json:"petType"
+  string pet_type = 1;
+}
+
+message AssessmentQuestionListResponse {
+  // @inject_tag: json:"data"
+  repeated AssessmentQuestionItem data = 1;
+}
+
+message AssessmentSubmitRequest {
+  // @inject_tag: json:"userId"
+  int64 user_id = 1;
+  // @inject_tag: json:"petType"
+  string pet_type = 2;
+  // @inject_tag: json:"answers"
+  repeated AssessmentAnswerItem answers = 3;
+}
+
+message AssessmentSubmitResponse {
+  // @inject_tag: json:"result"
+  AssessmentResultItem result = 1;
+}
+
+message AssessmentResultDetailRequest {
+  // @inject_tag: json:"id"
+  int64 id = 1;
+  // @inject_tag: json:"userId"
+  int64 user_id = 2;
+}
+
+message AssessmentResultDetailResponse {
+  // @inject_tag: json:"result"
+  AssessmentResultItem result = 1;
+}
+
+message AssessmentHistoryListRequest {
+  // @inject_tag: json:"userId"
+  int64 user_id = 1;
+  // @inject_tag: json:"page"
+  twoto.common.v1.PageRequest page = 2;
+}
+
+message AssessmentHistoryListResponse {
+  // @inject_tag: json:"page"
+  twoto.common.v1.PageMeta page = 1;
+  // @inject_tag: json:"data"
+  repeated AssessmentResultItem data = 2;
+}

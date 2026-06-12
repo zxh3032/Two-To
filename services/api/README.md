@@ -15,16 +15,21 @@ routers -> controllers -> models/page -> models/data -> models/dao
 - `models/dao`：定义数据库表结构、枚举、`TableName` 等持久化模型。
 - `library`：放鉴权、配置、外部服务 client、通用工具等基础能力。
 
-Two-To 会沿用这个分层思想，但避免直接绑定参考仓库中的历史框架和 proto/servlet 约束。项目早期优先使用清晰、轻量的 Go HTTP API 组织方式，后续如确有必要再引入更复杂的协议或代码生成。
+Two-To 会沿用这个分层思想，但避免直接绑定参考仓库中的公司内部 servlet/resident 框架。项目早期优先使用清晰、轻量的 Go HTTP API 组织方式，同时保留 proto 作为请求参数和返回值的统一契约。
+
+本项目会保留参考仓库中“请求参数和返回值由 proto 定义”的方式。根目录 `proto/` 是前后端共享的接口契约源，后端通过脚本生成 Go 结构到 `services/api/proto/`，controller 使用生成后的 `XxxRequest` 和 `XxxResponse`。
 
 ## 目录结构
 
 ```text
 services/api/
+  go.mod
+  go.sum
   cmd/
     two-to-api/         # API 服务启动入口
   routers/              # 路由注册与接口分组
   controllers/          # HTTP controller，负责请求解析、响应输出
+  proto/                # 由根目录 proto/ 生成的 Go 请求/响应结构
   models/
     page/               # 业务编排层，对应一次用户请求或业务用例
     data/               # 数据访问层，封装查询、写入、事务和数据组合
@@ -73,7 +78,7 @@ Controller 是 HTTP 适配层，保持尽可能薄。
 职责：
 
 - 解析请求参数。
-- 创建 request/response DTO。
+- 创建由 proto 生成的 request/response。
 - 调用对应 page 层。
 - 统一输出成功或失败响应。
 
@@ -82,6 +87,16 @@ Controller 是 HTTP 适配层，保持尽可能薄。
 - 不直接访问 `models/data` 或 `models/dao`。
 - 不写复杂业务判断。
 - 不拼装复杂返回数据。
+
+Controller 典型形态：
+
+```go
+func List(ctx *gin.Context) {
+    request := &proto.BreedListRequest{}
+    response := &proto.BreedListResponse{}
+    // 解析 request，调用 page 层，输出 response
+}
+```
 
 ### models/page
 
@@ -161,6 +176,7 @@ DAO 层只描述持久化模型和与数据库强相关的定义。
 cmd
   -> routers
     -> controllers
+      -> proto
       -> models/page
         -> models/data
           -> models/dao
@@ -198,17 +214,23 @@ cmd
 暂不照搬：
 
 - 超大单文件路由。Two-To 初期按模块拆分路由文件。
-- proto request/response。Two-To 初期使用普通 JSON DTO，后续有跨服务协议需求再评估。
 - 与公司内部框架强绑定的 servlet/resident 服务。Two-To 会保持开源 GitHub 项目更容易启动和部署。
+
+调整：
+
+- proto 文件不放在后端私有目录，而是放在仓库根目录 `proto/`，作为前后端共享契约源。
+- 后端生成物放在 `services/api/proto/`，前端生成物放在 `apps/web/src/shared/proto/`。
 
 ## 新增接口开发流程
 
-1. 在 `routers` 中注册接口路径。
-2. 在 `controllers/{module}` 中创建薄 controller。
-3. 在 `models/page/{module}` 中实现业务编排。
-4. 在 `models/data` 中补充数据访问方法。
-5. 在 `models/dao` 中补充表结构或枚举。
-6. 补充接口文档和必要测试。
+1. 在根目录 `proto/` 中定义 `XxxRequest` 和 `XxxResponse`。
+2. 执行 `./scripts/gen-proto.sh` 生成后端 Go 结构。
+3. 在 `routers` 中注册接口路径。
+4. 在 `controllers/{module}` 中创建薄 controller，并使用生成后的 proto request/response。
+5. 在 `models/page/{module}` 中实现业务编排。
+6. 在 `models/data` 中补充数据访问方法。
+7. 在 `models/dao` 中补充表结构或枚举。
+8. 补充接口文档和必要测试。
 
 ## 命名建议
 

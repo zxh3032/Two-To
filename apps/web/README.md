@@ -16,6 +16,7 @@ apps/web/
       api/              # 请求客户端、接口封装、错误处理
       config/           # 前端环境配置、常量配置
       lib/              # 通用工具函数、hooks、格式化逻辑
+      proto/            # 由根目录 proto/ 生成的 TypeScript 请求/响应类型
       styles/           # 全局样式、主题变量、设计 token
       ui/               # 通用 UI 组件，例如 Button、Modal、FormItem
     assets/             # 图片、字体、图标等源码资产
@@ -81,6 +82,7 @@ apps/web/
 - `shared/api`：HTTP client、API error、请求拦截。
 - `shared/config`：环境变量读取、路由路径、常量。
 - `shared/lib`：日期格式化、校验函数、通用 hooks。
+- `shared/proto`：由根目录 `proto/` 生成的 TypeScript 类型，承接接口请求参数和返回值。
 - `shared/styles`：全局 CSS、主题变量。
 - `shared/ui`：无业务语义的基础组件。
 
@@ -112,6 +114,7 @@ app -> pages -> features -> entities -> shared
 ## 开发约定
 
 - 新页面先放在 `pages`，页面内的业务动作逐步抽到 `features`。
+- 新接口的请求参数和返回值先在根目录 `proto/` 定义，再生成到 `shared/proto` 使用。
 - 新接口封装优先放在对应 feature 内；如果多个模块复用，再下沉到 `entities` 或 `shared/api`。
 - UI 组件先就近放置；确认可复用且无业务语义后，再移动到 `shared/ui`。
 - 类型定义优先贴近使用场景；跨模块复用的领域类型放到 `entities`。
