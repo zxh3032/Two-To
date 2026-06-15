@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { PropsWithChildren } from 'react';
 
+import { AuthProvider } from './AuthProvider';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -13,5 +15,9 @@ const queryClient = new QueryClient({
 
 // AppProviders 集中挂载全局能力，后续主题、登录态、埋点都从这里接入。
 export function AppProviders({ children }: PropsWithChildren) {
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>{children}</AuthProvider>
+    </QueryClientProvider>
+  );
 }

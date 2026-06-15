@@ -53,17 +53,15 @@ describe('App', () => {
     vi.unstubAllGlobals();
   });
 
-  it('渲染首页并展示流式项目口号', async () => {
-    const { container } = render(<App />);
+  it('未登录时进入登录页', async () => {
+    render(<App />);
 
-    await waitFor(() => expect(screen.getByRole('heading', { name: '两两相逢，奔赴朝夕。' })).toBeInTheDocument(), {
+    await waitFor(() => expect(screen.getByRole('heading', { name: '登录 Two-To' })).toBeInTheDocument(), {
       timeout: 2_000,
     });
-    expect(container.querySelector('.slogan-hero .eyebrow')).toBeNull();
-    expect(screen.getByText('从养前评估、品种选择到长期照护，让每一次陪伴都有清晰依据和持续记录。')).toBeInTheDocument();
-    expect(screen.queryByText('把相遇，照顾成日常')).not.toBeInTheDocument();
-    expect(screen.queryByText('先判断适不适合养，再理解适合养什么，最后把长期照护和成长记录串起来。')).not.toBeInTheDocument();
-    expect(screen.queryByText(/Request ID/i)).not.toBeInTheDocument();
-    expect(screen.queryByText('pong')).not.toBeInTheDocument();
+    expect(screen.getByText('两两相逢，先认出彼此')).toBeInTheDocument();
+    expect(screen.getByRole('tablist', { name: '登录方式' })).toBeInTheDocument();
+    expect(screen.getByText('登录 / 注册')).toBeInTheDocument();
+    expect(screen.queryByText('从养前评估、品种选择到长期照护，让每一次陪伴都有清晰依据和持续记录。')).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,13 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { Navigate, createBrowserRouter } from 'react-router-dom';
 
 import { AppLayout } from './AppLayout';
+import { PublicOnlyRoute, RequireAuth } from './route-guards';
+import { SecurityPage } from '../pages/account/SecurityPage';
 import { AssessmentPage } from '../pages/assessment/AssessmentPage';
+import { EmailRegisterPage } from '../pages/auth/EmailRegisterPage';
+import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
+import { LoginPage } from '../pages/auth/LoginPage';
+import { SetupProfilePage } from '../pages/auth/SetupProfilePage';
 import { BreedsPage } from '../pages/breeds/BreedsPage';
 import { HomePage } from '../pages/home/HomePage';
 import { NotFoundPage } from '../pages/not-found/NotFoundPage';
@@ -11,13 +17,30 @@ import { PetsPage } from '../pages/pets/PetsPage';
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <AppLayout />,
+    element: <RequireAuth />,
     children: [
-      { index: true, element: <HomePage /> },
-      { path: 'assessment', element: <AssessmentPage /> },
-      { path: 'breeds', element: <BreedsPage /> },
-      { path: 'pets', element: <PetsPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      {
+        element: <AppLayout />,
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: 'assessment', element: <AssessmentPage /> },
+          { path: 'breeds', element: <BreedsPage /> },
+          { path: 'pets', element: <PetsPage /> },
+          { path: 'account/security', element: <SecurityPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
+    ],
+  },
+  {
+    path: '/auth',
+    element: <PublicOnlyRoute />,
+    children: [
+      { index: true, element: <Navigate replace to="/auth/login" /> },
+      { path: 'login', element: <LoginPage /> },
+      { path: 'register/email', element: <EmailRegisterPage /> },
+      { path: 'setup-profile', element: <SetupProfilePage /> },
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
     ],
   },
 ]);
