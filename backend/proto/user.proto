@@ -1,0 +1,260 @@
+syntax = "proto3";
+
+package twoto.user.v1;
+
+option go_package = "github.com/zxh3032/two-to/backend/proto;proto";
+
+message UserInfo {
+  // @inject_tag: json:"id"
+  int64 id = 1;
+  // @inject_tag: json:"nickname"
+  string nickname = 2;
+  // @inject_tag: json:"status"
+  int32 status = 3;
+}
+
+message UserProfile {
+  // @inject_tag: json:"petStage"
+  string pet_stage = 1;
+  // @inject_tag: json:"interestedPetTypes"
+  repeated string interested_pet_types = 2;
+  // @inject_tag: json:"petExperience"
+  string pet_experience = 3;
+  // @inject_tag: json:"dailyCompanyTime"
+  string daily_company_time = 4;
+  // @inject_tag: json:"livingSituation"
+  string living_situation = 5;
+  // @inject_tag: json:"petConstraints"
+  repeated string pet_constraints = 6;
+}
+
+message UserIdentity {
+  // @inject_tag: json:"id"
+  int64 id = 1;
+  // @inject_tag: json:"identityType"
+  string identity_type = 2;
+  // @inject_tag: json:"identityValue"
+  string identity_value = 3;
+  // @inject_tag: json:"maskedValue"
+  string masked_value = 4;
+  // @inject_tag: json:"verifyTime"
+  int64 verify_time = 5;
+}
+
+message UserSession {
+  // @inject_tag: json:"id"
+  int64 id = 1;
+  // @inject_tag: json:"deviceName"
+  string device_name = 2;
+  // @inject_tag: json:"status"
+  int32 status = 3;
+  // @inject_tag: json:"lastActiveTime"
+  int64 last_active_time = 4;
+  // @inject_tag: json:"expireTime"
+  int64 expire_time = 5;
+  // @inject_tag: json:"current"
+  bool current = 6;
+}
+
+message CaptchaResponse {
+  // @inject_tag: json:"captchaId"
+  string captcha_id = 1;
+  // @inject_tag: json:"imageBase64"
+  string image_base64 = 2;
+  // @inject_tag: json:"expiresIn"
+  int64 expires_in = 3;
+}
+
+message SendCodeRequest {
+  // @inject_tag: json:"codeType"
+  string code_type = 1;
+  // @inject_tag: json:"scene"
+  string scene = 2;
+  // @inject_tag: json:"target"
+  string target = 3;
+  // @inject_tag: json:"captchaId"
+  string captcha_id = 4;
+  // @inject_tag: json:"captchaCode"
+  string captcha_code = 5;
+}
+
+message SendCodeResponse {
+  // @inject_tag: json:"cooldownSeconds"
+  int64 cooldown_seconds = 1;
+  // @inject_tag: json:"expiresIn"
+  int64 expires_in = 2;
+}
+
+message EmailLoginRequest {
+  // @inject_tag: json:"email"
+  string email = 1;
+  // @inject_tag: json:"password"
+  string password = 2;
+  // @inject_tag: json:"captchaId"
+  string captcha_id = 3;
+  // @inject_tag: json:"captchaCode"
+  string captcha_code = 4;
+}
+
+message PhoneLoginRequest {
+  // @inject_tag: json:"phone"
+  string phone = 1;
+  // @inject_tag: json:"smsCode"
+  string sms_code = 2;
+}
+
+message EmailRegisterVerifyRequest {
+  // @inject_tag: json:"email"
+  string email = 1;
+  // @inject_tag: json:"password"
+  string password = 2;
+  // @inject_tag: json:"emailCode"
+  string email_code = 3;
+}
+
+message ProfileSetupResponse {
+  // @inject_tag: json:"profileSetupToken"
+  string profile_setup_token = 1;
+}
+
+message CompleteProfileRequest {
+  // @inject_tag: json:"profileSetupToken"
+  string profile_setup_token = 1;
+  // @inject_tag: json:"nickname"
+  string nickname = 2;
+  // @inject_tag: json:"petStage"
+  string pet_stage = 3;
+  // @inject_tag: json:"interestedPetTypes"
+  repeated string interested_pet_types = 4;
+  // @inject_tag: json:"petExperience"
+  string pet_experience = 5;
+  // @inject_tag: json:"dailyCompanyTime"
+  string daily_company_time = 6;
+  // @inject_tag: json:"livingSituation"
+  string living_situation = 7;
+  // @inject_tag: json:"petConstraints"
+  repeated string pet_constraints = 8;
+}
+
+message TokenPair {
+  // @inject_tag: json:"accessToken"
+  string access_token = 1;
+  // @inject_tag: json:"accessTokenExpiresIn"
+  int64 access_token_expires_in = 2;
+  // @inject_tag: json:"refreshToken"
+  string refresh_token = 3;
+  // @inject_tag: json:"refreshTokenExpiresIn"
+  int64 refresh_token_expires_in = 4;
+}
+
+message LoginResponse {
+  // @inject_tag: json:"accessToken"
+  string access_token = 1;
+  // @inject_tag: json:"accessTokenExpiresIn"
+  int64 access_token_expires_in = 2;
+  // @inject_tag: json:"refreshToken"
+  string refresh_token = 3;
+  // @inject_tag: json:"refreshTokenExpiresIn"
+  int64 refresh_token_expires_in = 4;
+  // @inject_tag: json:"user"
+  UserInfo user = 5;
+}
+
+message PhoneLoginResponse {
+  // @inject_tag: json:"requiresProfileSetup"
+  bool requires_profile_setup = 1;
+  // @inject_tag: json:"profileSetupToken"
+  string profile_setup_token = 2;
+  // @inject_tag: json:"auth"
+  LoginResponse auth = 3;
+}
+
+message RefreshRequest {
+  // @inject_tag: json:"refreshToken"
+  string refresh_token = 1;
+}
+
+message LogoutRequest {
+  // @inject_tag: json:"refreshToken"
+  string refresh_token = 1;
+}
+
+message ForgotPasswordVerifyCodeRequest {
+  // @inject_tag: json:"identityType"
+  string identity_type = 1;
+  // @inject_tag: json:"identityValue"
+  string identity_value = 2;
+  // @inject_tag: json:"code"
+  string code = 3;
+}
+
+message ForgotPasswordVerifyCodeResponse {
+  // @inject_tag: json:"resetToken"
+  string reset_token = 1;
+}
+
+message ForgotPasswordResetRequest {
+  // @inject_tag: json:"resetToken"
+  string reset_token = 1;
+  // @inject_tag: json:"newPassword"
+  string new_password = 2;
+}
+
+message AccountMeResponse {
+  // @inject_tag: json:"user"
+  UserInfo user = 1;
+  // @inject_tag: json:"profile"
+  UserProfile profile = 2;
+  // @inject_tag: json:"identities"
+  repeated UserIdentity identities = 3;
+}
+
+message UpdateProfileRequest {
+  // @inject_tag: json:"nickname"
+  string nickname = 1;
+  // @inject_tag: json:"petStage"
+  string pet_stage = 2;
+  // @inject_tag: json:"interestedPetTypes"
+  repeated string interested_pet_types = 3;
+  // @inject_tag: json:"petExperience"
+  string pet_experience = 4;
+  // @inject_tag: json:"dailyCompanyTime"
+  string daily_company_time = 5;
+  // @inject_tag: json:"livingSituation"
+  string living_situation = 6;
+  // @inject_tag: json:"petConstraints"
+  repeated string pet_constraints = 7;
+}
+
+message UpdateEmailRequest {
+  // @inject_tag: json:"email"
+  string email = 1;
+  // @inject_tag: json:"emailCode"
+  string email_code = 2;
+}
+
+message UpdatePhoneRequest {
+  // @inject_tag: json:"phone"
+  string phone = 1;
+  // @inject_tag: json:"smsCode"
+  string sms_code = 2;
+}
+
+message CurrentPasswordRequest {
+  // @inject_tag: json:"currentPassword"
+  string current_password = 1;
+}
+
+message UpdatePasswordRequest {
+  // @inject_tag: json:"currentPassword"
+  string current_password = 1;
+  // @inject_tag: json:"newPassword"
+  string new_password = 2;
+}
+
+message SessionsResponse {
+  // @inject_tag: json:"sessions"
+  repeated UserSession sessions = 1;
+  // @inject_tag: json:"currentSessionId"
+  int64 current_session_id = 2;
+}

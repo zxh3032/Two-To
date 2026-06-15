@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zxh3032/two-to/backend/library/cache"
 	"github.com/zxh3032/two-to/backend/library/config"
 	"github.com/zxh3032/two-to/backend/library/database"
 	"github.com/zxh3032/two-to/backend/library/logger"
@@ -36,7 +37,17 @@ func main() {
 		log.Fatal("初始化 MySQL 数据库失败", zap.Error(err))
 	}
 
-	router := routers.NewRouter(cfg, log, db)
+	cacheStore, err := cache.Open(initCtx, cfg.Cache, log)
+	if err != nil {
+		log.Fatal("初始化 cache 失败", zap.Error(err))
+	}
+	defer func() {
+		if err := cacheStore.Close(); err != nil {
+			log.Error("关闭 cache 失败", zap.Error(err))
+		}
+	}()
+
+	router := routers.NewRouter(cfg, log, db, cacheStore)
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
 		Handler:           router,
