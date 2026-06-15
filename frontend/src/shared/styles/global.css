@@ -26,9 +26,10 @@
 
 body {
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   background: #fff8ef;
+  overflow-x: hidden;
 }
 
 button,
@@ -51,7 +52,7 @@ a {
 .app-shell {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .sidebar {
@@ -103,6 +104,7 @@ a {
 .nav-link {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   min-height: 44px;
   padding: 0 12px;
   border: 1px solid transparent;
@@ -117,10 +119,17 @@ a {
 }
 
 .nav-link:hover,
+.nav-link:focus-visible,
 .nav-link--active {
   color: #3a2418;
   background: #fffdf8;
   border-color: #f3c47d;
+}
+
+.nav-link:focus-visible,
+.button-link:focus-visible {
+  outline: 3px solid rgba(232, 93, 147, 0.32);
+  outline-offset: 2px;
 }
 
 .main-panel {
@@ -191,6 +200,7 @@ a {
   position: relative;
   overflow: hidden;
   min-height: 360px;
+  aspect-ratio: 16 / 5.8;
   display: grid;
   align-items: center;
   padding: 56px;
@@ -222,8 +232,6 @@ a {
 .slogan-hero h1 {
   margin: 0;
   color: #4a2a1a;
-  font-size: 38px;
-  line-height: 1.18;
   letter-spacing: 0;
 }
 
@@ -396,43 +404,68 @@ a {
 
 @media (max-width: 900px) {
   .app-shell {
-    grid-template-columns: 1fr;
+    display: block;
+    min-height: 100dvh;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
   }
 
   .sidebar {
     position: sticky;
     top: 0;
-    z-index: 10;
-    gap: 16px;
-    padding: 16px;
+    z-index: 20;
+    display: block;
+    padding: calc(10px + env(safe-area-inset-top)) 18px 10px;
+    background: #fff0c7;
+    border-right: 0;
+    border-bottom: 1px solid #f4cf9f;
   }
 
   .nav-list {
-    display: flex;
-    overflow-x: auto;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 8px max(8px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-right));
+    background: #fffdf8;
+    border-top: 1px solid #f1d4b7;
+    box-shadow: 0 -10px 28px rgba(112, 64, 32, 0.1);
   }
 
   .nav-link {
-    flex: 0 0 auto;
+    justify-content: center;
+    min-width: 0;
+    min-height: 52px;
+    padding: 0 6px;
+    text-align: center;
+    line-height: 1.2;
   }
 
   .main-panel {
-    padding: 20px;
+    padding: 22px 18px 28px;
   }
 
-  .page-header,
   .health-panel {
     grid-template-columns: 1fr;
     align-items: start;
   }
 
-  .slogan-hero {
-    min-height: 320px;
-    padding: 36px;
+  .page-stack {
+    gap: 24px;
   }
 
-  .slogan-hero h1 {
-    font-size: 32px;
+  .home-page {
+    gap: 26px;
+  }
+
+  .slogan-hero {
+    min-height: 304px;
+    aspect-ratio: 4 / 2.7;
+    padding: 36px;
   }
 
   .slogan-hero__text {
@@ -440,11 +473,15 @@ a {
     font-size: 36px;
   }
 
+  .module-card {
+    min-height: 156px;
+  }
 }
 
 @media (max-width: 620px) {
   .page-header {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .page-header h1,
@@ -457,9 +494,26 @@ a {
     height: 40px;
   }
 
+  .brand span {
+    font-size: 12px;
+  }
+
+  .main-panel {
+    padding: 18px 14px 24px;
+  }
+
+  .page-stack {
+    gap: 20px;
+  }
+
+  .home-page {
+    gap: 22px;
+  }
+
   .slogan-hero {
-    min-height: 300px;
-    padding: 28px;
+    min-height: 248px;
+    aspect-ratio: 1 / 0.78;
+    padding: 24px;
   }
 
   .slogan-hero::after {
@@ -469,17 +523,67 @@ a {
     height: 132px;
   }
 
-  .slogan-hero h1 {
-    font-size: 28px;
+  .slogan-hero__text {
+    min-height: 82px;
+    font-size: 30px;
+    line-height: 1.24;
   }
 
-  .slogan-hero__text {
-    min-height: 92px;
-    font-size: 32px;
+  .slogan-hero__subcopy {
+    font-size: 15px;
+  }
+
+  .home-section {
+    gap: 16px;
   }
 
   .module-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .module-card {
+    min-height: 132px;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .module-card__top {
+    align-items: center;
+  }
+
+  .empty-panel,
+  .health-panel {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 380px) {
+  .sidebar {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .brand {
+    gap: 10px;
+  }
+
+  .brand strong {
+    font-size: 17px;
+  }
+
+  .nav-link {
+    font-size: 13px;
+  }
+
+  .slogan-hero {
+    min-height: 236px;
+    padding: 20px;
+  }
+
+  .slogan-hero__text {
+    min-height: 76px;
+    font-size: 28px;
   }
 }
 
