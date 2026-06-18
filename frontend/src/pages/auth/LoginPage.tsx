@@ -113,7 +113,7 @@ export function LoginPage() {
   }
 
   return (
-    <main className="auth-page">
+    <main className="auth-page auth-page--split">
       <AuthAnimalStage mode={animalMode} />
       <section className="auth-panel" aria-labelledby="login-title">
         <div className="auth-panel__header">
