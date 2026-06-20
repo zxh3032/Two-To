@@ -115,6 +115,8 @@ cmd
 - 不写业务流程。
 - 不解析复杂请求参数。
 - 不直接调用 page/data/dao。
+- 同一个 Gin 路由组下的 handler 初始化和路由注册必须用 `{}` 聚合在一起，避免不同模块的依赖装配、注释和接口声明平铺混杂。
+- 新增二级路由组时，优先使用 `group := parent.Group(...)` 后紧跟 `{ ... }` 的形式；只有当单个模块路由明显膨胀时，才拆到 `registerXxxRoutes`，拆出后的函数内部也保持 `{}` 分组风格。
 
 ### middlewares
 
@@ -338,6 +340,9 @@ Go 导出标识建议：
 - 不打印 token、密码、完整手机号、详细地址、敏感备注等隐私数据。
 - 错误日志要保留原始 error，便于定位根因。
 - controller 负责记录请求级上下文，page/data 负责记录业务级上下文，避免重复刷屏。
+- controller 处理 page 返回结果时必须走 `response.WriteResult`，controller 自身解析参数或 path 失败时必须走 `response.WriteError` 或 `response.WriteErrorData`，不要在新增接口里裸写 `response.Error` 后直接返回。
+- page 层返回内部错误时必须使用 `apperror.Wrap` 或等价方式携带原始错误，并给前端返回稳定、可理解的安全文案；不得把数据库、cache、第三方服务的原始错误文本直接作为响应 message。
+- data 层默认返回错误，由 controller/page 的统一日志出口记录请求级失败；事务失败、关键写入失败、旁路审计失败、外部系统调用失败等需要在发生点补充结构化日志或带足够上下文向上包装。
 
 ## 封装与模块拆分原则
 
@@ -374,6 +379,13 @@ Go 导出标识建议：
 7. 在 `models/dao` 中补充表结构、枚举和 `TableName`。
 8. 补充日志、测试、接口文档和必要的迁移脚本。
 
+新增接口时还必须检查：
+
+- 路由是否按 Gin group 使用 `{}` 聚合。
+- controller 是否统一使用 `response.WriteResult`、`response.WriteError` 或 `response.WriteErrorData` 输出失败。
+- page 层内部错误是否隐藏原始错误文本，只通过日志保留 cause。
+- data 层失败是否能通过 request id、module、action、业务 ID 和原始 error 定位。
+
 ## 校验要求
 
 后端代码修改后至少执行 Linux 目标环境校验：
@@ -397,6 +409,9 @@ GOOS=linux GOARCH=amd64 go test ./...
 
 要求：
 
+- 严格执行：只要一次提交包含 `backend/` 下的任何文件，提交信息必须使用 `tutu-xxxx` 前缀，不允许用 `feat:`、`fix:`、`docs:`、`chore:` 等格式替代。
+- 当用户要求“提交代码”“帮我 commit”“提交这些改动”等操作时，必须主动套用本规则，不要等待用户再次提醒。
+- 提交前必须执行下方推荐命令查看最近一次后端编号；如果历史中存在未编号的后端提交，仍以最近一次已编号的 `tutu-xxxx` 为基准递增。
 - 从本次提交开始，如果历史提交中没有后端编号，则第一条后端提交使用 `tutu-0001`。
 - 每次提交前，先查看历史提交中最近一次后端编号，再将编号加 1。
 - 提交信息必须以编号开头，格式为 `tutu-0001 中文提交描述`。

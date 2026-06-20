@@ -466,5 +466,5 @@ func toIdentities(items []dao.UserAuthIdentity) []*proto.UserIdentity {
 
 // internalError 将底层错误包装为统一的接口错误结构。
 func internalError(err error) *apperror.Error {
-	return apperror.New(http.StatusInternalServerError, response.CodeInternalError, err.Error())
+	return apperror.Wrap(http.StatusInternalServerError, response.CodeInternalError, "服务暂时不可用", err)
 }

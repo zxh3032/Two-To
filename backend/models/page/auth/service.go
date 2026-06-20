@@ -769,5 +769,5 @@ func toUserInfo(user *dao.User) *proto.UserInfo {
 
 // internalError 把底层错误包装成统一业务错误，controller 会负责转换成 HTTP 响应。
 func internalError(err error) *apperror.Error {
-	return apperror.New(http.StatusInternalServerError, response.CodeInternalError, err.Error())
+	return apperror.Wrap(http.StatusInternalServerError, response.CodeInternalError, "服务暂时不可用", err)
 }
