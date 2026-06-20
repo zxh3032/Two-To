@@ -1,21 +1,20 @@
 package account
 
 import (
-	"context"
 	"errors"
 
 	"github.com/zxh3032/two-to/backend/library/apperror"
 	authlib "github.com/zxh3032/two-to/backend/library/auth"
 	"github.com/zxh3032/two-to/backend/library/response"
 	"github.com/zxh3032/two-to/backend/library/security"
+	"github.com/zxh3032/two-to/backend/library/servlet"
 	"github.com/zxh3032/two-to/backend/models/dao"
 	"github.com/zxh3032/two-to/backend/models/data"
-	"github.com/zxh3032/two-to/backend/models/page/pagectx"
 	"gorm.io/gorm"
 )
 
 // updateIdentity 绑定或换绑联系方式；同类型旧联系方式会先解绑，再写入新联系方式。
-func (s *Service) updateIdentity(ctx context.Context, userID uint64, identityType int32, identityValue string, meta pagectx.RequestMeta) error {
+func (s *Service) updateIdentity(ctx *servlet.Context, userID uint64, identityType int32, identityValue string) error {
 	if err := s.requireDB(); err != nil {
 		return err
 	}
@@ -53,12 +52,12 @@ func (s *Service) updateIdentity(ctx context.Context, userID uint64, identityTyp
 		eventType = "bind_email"
 		masked = security.MaskEmail(identityValue)
 	}
-	s.logSecurity(ctx, userID, eventType, map[string]string{"value": masked}, meta)
+	s.logSecurity(ctx, userID, eventType, map[string]string{"value": masked})
 	return nil
 }
 
 // unbindIdentity 解绑联系方式，必须通过当前密码校验并保留至少一种登录联系方式。
-func (s *Service) unbindIdentity(ctx context.Context, userID uint64, identityType int32, currentPassword string, meta pagectx.RequestMeta) error {
+func (s *Service) unbindIdentity(ctx *servlet.Context, userID uint64, identityType int32, currentPassword string) error {
 	if err := s.requireDB(); err != nil {
 		return err
 	}
@@ -91,6 +90,6 @@ func (s *Service) unbindIdentity(ctx context.Context, userID uint64, identityTyp
 	if identityType == dao.IdentityTypeEmail {
 		eventType = "unbind_email"
 	}
-	s.logSecurity(ctx, userID, eventType, map[string]string{}, meta)
+	s.logSecurity(ctx, userID, eventType, map[string]string{})
 	return nil
 }

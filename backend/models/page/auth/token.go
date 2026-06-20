@@ -8,10 +8,10 @@ import (
 
 	authlib "github.com/zxh3032/two-to/backend/library/auth"
 	"github.com/zxh3032/two-to/backend/library/security"
+	"github.com/zxh3032/two-to/backend/library/servlet"
 	"github.com/zxh3032/two-to/backend/library/verification"
 	"github.com/zxh3032/two-to/backend/models/dao"
 	"github.com/zxh3032/two-to/backend/models/data"
-	"github.com/zxh3032/two-to/backend/models/page/pagectx"
 	"github.com/zxh3032/two-to/backend/proto"
 )
 
@@ -29,7 +29,7 @@ func (s *Service) createProfileSetupToken(ctx context.Context, payload verificat
 }
 
 // issueLogin 创建设备会话、写入 session cache，并返回 access token 与 refresh token。
-func (s *Service) issueLogin(ctx context.Context, user *dao.User, meta pagectx.RequestMeta) (*proto.LoginResponse, error) {
+func (s *Service) issueLogin(ctx *servlet.Context, user *dao.User) (*proto.LoginResponse, error) {
 	now := data.Now()
 	refreshToken, refreshHash, err := s.tokenManager.GenerateRefreshToken()
 	if err != nil {
@@ -40,9 +40,9 @@ func (s *Service) issueLogin(ctx context.Context, user *dao.User, meta pagectx.R
 	session := &dao.UserSession{
 		UserID:           user.ID,
 		RefreshTokenHash: refreshHash,
-		DeviceName:       deviceName(meta.UserAgent),
-		UserAgentHash:    security.HashPlain(meta.UserAgent),
-		IPHash:           security.ClientIPHash(meta.IP),
+		DeviceName:       deviceName(ctx.UserAgent),
+		UserAgentHash:    security.HashPlain(ctx.UserAgent),
+		IPHash:           security.ClientIPHash(ctx.IP),
 		LastActiveTime:   now,
 		ExpireTime:       expireTime,
 		BaseModel:        dao.NewBaseModel(dao.SessionStatusNormal, now),
@@ -65,6 +65,22 @@ func (s *Service) issueLogin(ctx context.Context, user *dao.User, meta pagectx.R
 		RefreshTokenExpiresIn: int64(s.tokenManager.RefreshTTL().Seconds()),
 		User:                  toUserInfo(user),
 	}, nil
+}
+
+func fillEmailLoginResponse(resp *proto.EmailLoginResponse, auth *proto.LoginResponse) {
+	resp.AccessToken = auth.GetAccessToken()
+	resp.AccessTokenExpiresIn = auth.GetAccessTokenExpiresIn()
+	resp.RefreshToken = auth.GetRefreshToken()
+	resp.RefreshTokenExpiresIn = auth.GetRefreshTokenExpiresIn()
+	resp.User = auth.GetUser()
+}
+
+func fillCompleteProfileResponse(resp *proto.CompleteProfileResponse, auth *proto.LoginResponse) {
+	resp.AccessToken = auth.GetAccessToken()
+	resp.AccessTokenExpiresIn = auth.GetAccessTokenExpiresIn()
+	resp.RefreshToken = auth.GetRefreshToken()
+	resp.RefreshTokenExpiresIn = auth.GetRefreshTokenExpiresIn()
+	resp.User = auth.GetUser()
 }
 
 // deviceName 从 User-Agent 粗略提取浏览器和系统，用于账号安全页展示登录设备。

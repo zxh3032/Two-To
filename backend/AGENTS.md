@@ -141,10 +141,9 @@ cmd
 
 职责：
 
-- 解析 query、path、body、header 等请求参数。
-- 创建 `proto` 生成的 `XxxRequest` 和 `XxxResponse`。
-- 调用对应 `models/page`。
-- 将 page 层返回结果转换为统一 HTTP 响应。
+- 声明当前路由对应的 `XxxRequest`、`XxxResponse` 和 page 执行函数。
+- 通过 `library/servlet` 统一解析 query、path、body、header 等请求参数。
+- 通过 `library/servlet` 调用对应 `models/page` 并输出统一 HTTP 响应。
 
 约束：
 
@@ -153,7 +152,8 @@ cmd
 - 不拼装复杂聚合数据。
 - 请求参数含义不清时，不在 controller 内临时猜测，应先补 proto 注释或待确认说明。
 - HTTP 接口主流程必须一个路由一个 controller 文件，文件名按动作命名，例如 `email_login.go`、`update_profile.go`、`revoke_session.go`。
-- controller 模块内的 `handler.go` 只放 `Handler` 结构体、构造函数、通用 bind/write/meta 等薄适配 helper，不承载具体接口主流程。
+- controller 不再新增模块级 `handler.go`、`controller.go` 或 bind/write/meta helper；通用 HTTP 执行逻辑必须放在 `library/servlet`。
+- controller 文件内不手写重复的 `func(ctx *gin.Context) { bind -> service -> write }` 模板，必须优先使用 `servlet.JSON`、`servlet.Empty`、`servlet.Path` 或 `servlet.Exec`。
 
 ### proto
 
@@ -169,7 +169,8 @@ cmd
 要求：
 
 - 不手写 `*.pb.go`。
-- 请求参数和返回值优先在 `.proto` 中定义。
+- 每个 HTTP 接口都必须在 `.proto` 中声明对应的 `XxxRequest` 和 `XxxResponse`；即使没有请求参数或没有返回字段，也要声明空 message。
+- 对外接口不要直接复用其他接口的 request/response 作为边界类型；可以在字段内部复用公共 message。
 - 字段注释要说明业务意义，尤其是 ID、状态、枚举、时间、分页和兼容字段。
 - 修改 `.proto` 后必须重新生成 Go 文件，并同步考虑前端 `shared/proto` 的 TypeScript 类型。
 
@@ -185,6 +186,12 @@ cmd
 - 调用外部服务 client。
 - 组装 proto response。
 - 决定业务错误码和用户可理解的错误信息。
+
+约束：
+
+- HTTP page 方法统一使用 `func(ctx *servlet.Context, req *proto.XxxRequest, resp *proto.XxxResponse) error` 形态。
+- page 方法通过写入传入的 `resp` 返回业务数据，不再返回 `(*proto.XxxResponse, error)`。
+- page 层不依赖 Gin；需要 requestId、IP、User-Agent、userID、sessionID 时，从 `servlet.Context` 读取。
 
 适合放置：
 

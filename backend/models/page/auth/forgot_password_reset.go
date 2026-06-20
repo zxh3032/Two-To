@@ -1,21 +1,19 @@
 package auth
 
 import (
-	"context"
-
 	"github.com/zxh3032/two-to/backend/library/apperror"
 	authlib "github.com/zxh3032/two-to/backend/library/auth"
 	"github.com/zxh3032/two-to/backend/library/response"
 	"github.com/zxh3032/two-to/backend/library/security"
+	"github.com/zxh3032/two-to/backend/library/servlet"
 	"github.com/zxh3032/two-to/backend/library/verification"
 	"github.com/zxh3032/two-to/backend/models/dao"
 	"github.com/zxh3032/two-to/backend/models/data"
-	"github.com/zxh3032/two-to/backend/models/page/pagectx"
 	"github.com/zxh3032/two-to/backend/proto"
 )
 
 // ForgotPasswordReset 使用 reset token 设置新密码，并撤销该用户所有历史会话。
-func (s *Service) ForgotPasswordReset(ctx context.Context, req *proto.ForgotPasswordResetRequest, meta pagectx.RequestMeta) error {
+func (s *Service) ForgotPasswordReset(ctx *servlet.Context, req *proto.ForgotPasswordResetRequest, _ *proto.ForgotPasswordResetResponse) error {
 	if err := s.requireDB(); err != nil {
 		return err
 	}
@@ -51,6 +49,6 @@ func (s *Service) ForgotPasswordReset(ctx context.Context, req *proto.ForgotPass
 		_ = authlib.DeleteCachedSession(ctx, s.cacheStore, session.ID)
 	}
 	_ = s.cacheStore.Del(ctx, key)
-	s.logSecurity(ctx, user.ID, "password_reset", map[string]string{}, meta)
+	s.logSecurity(ctx, user.ID, "password_reset", map[string]string{})
 	return nil
 }

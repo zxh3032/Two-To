@@ -1,9 +1,9 @@
 package slogan
 
 import (
-	"context"
 	"errors"
 
+	"github.com/zxh3032/two-to/backend/library/servlet"
 	"github.com/zxh3032/two-to/backend/proto"
 	"go.uber.org/zap"
 )
@@ -21,17 +21,16 @@ func New(log *zap.Logger) *Page {
 }
 
 // Handle 返回 Two-To 当前项目口号，并透传 request id 方便排查链路。
-func (p *Page) Handle(ctx context.Context, req *proto.SloganRequest) (*proto.SloganResponse, error) {
+func (p *Page) Handle(ctx *servlet.Context, req *proto.SloganRequest, resp *proto.SloganResponse) error {
 	if req == nil {
-		return nil, errors.New("slogan request is nil")
+		return errors.New("slogan request is nil")
 	}
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return err
 	}
 
-	p.log.Info("处理项目 slogan 请求", zap.String("requestId", req.GetRequestId()))
-	return &proto.SloganResponse{
-		Slogan:    projectSlogan,
-		RequestId: req.GetRequestId(),
-	}, nil
+	p.log.Info("处理项目 slogan 请求", zap.String("requestId", ctx.RequestID))
+	resp.Slogan = projectSlogan
+	resp.RequestId = ctx.RequestID
+	return nil
 }

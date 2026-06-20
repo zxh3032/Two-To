@@ -56,6 +56,9 @@ message UserSession {
   bool current = 6;
 }
 
+message CaptchaRequest {
+}
+
 message CaptchaResponse {
   // @inject_tag: json:"captchaId"
   string captcha_id = 1;
@@ -96,6 +99,19 @@ message EmailLoginRequest {
   string captcha_code = 4;
 }
 
+message EmailLoginResponse {
+  // @inject_tag: json:"accessToken"
+  string access_token = 1;
+  // @inject_tag: json:"accessTokenExpiresIn"
+  int64 access_token_expires_in = 2;
+  // @inject_tag: json:"refreshToken"
+  string refresh_token = 3;
+  // @inject_tag: json:"refreshTokenExpiresIn"
+  int64 refresh_token_expires_in = 4;
+  // @inject_tag: json:"user"
+  UserInfo user = 5;
+}
+
 message PhoneLoginRequest {
   // @inject_tag: json:"phone"
   string phone = 1;
@@ -112,7 +128,7 @@ message EmailRegisterVerifyRequest {
   string email_code = 3;
 }
 
-message ProfileSetupResponse {
+message EmailRegisterVerifyResponse {
   // @inject_tag: json:"profileSetupToken"
   string profile_setup_token = 1;
 }
@@ -136,7 +152,7 @@ message CompleteProfileRequest {
   repeated string pet_constraints = 8;
 }
 
-message TokenPair {
+message CompleteProfileResponse {
   // @inject_tag: json:"accessToken"
   string access_token = 1;
   // @inject_tag: json:"accessTokenExpiresIn"
@@ -145,6 +161,8 @@ message TokenPair {
   string refresh_token = 3;
   // @inject_tag: json:"refreshTokenExpiresIn"
   int64 refresh_token_expires_in = 4;
+  // @inject_tag: json:"user"
+  UserInfo user = 5;
 }
 
 message LoginResponse {
@@ -174,9 +192,23 @@ message RefreshRequest {
   string refresh_token = 1;
 }
 
+message RefreshResponse {
+  // @inject_tag: json:"accessToken"
+  string access_token = 1;
+  // @inject_tag: json:"accessTokenExpiresIn"
+  int64 access_token_expires_in = 2;
+  // @inject_tag: json:"refreshToken"
+  string refresh_token = 3;
+  // @inject_tag: json:"refreshTokenExpiresIn"
+  int64 refresh_token_expires_in = 4;
+}
+
 message LogoutRequest {
   // @inject_tag: json:"refreshToken"
   string refresh_token = 1;
+}
+
+message LogoutResponse {
 }
 
 message ForgotPasswordVerifyCodeRequest {
@@ -198,6 +230,12 @@ message ForgotPasswordResetRequest {
   string reset_token = 1;
   // @inject_tag: json:"newPassword"
   string new_password = 2;
+}
+
+message ForgotPasswordResetResponse {
+}
+
+message AccountMeRequest {
 }
 
 message AccountMeResponse {
@@ -226,11 +264,23 @@ message UpdateProfileRequest {
   repeated string pet_constraints = 7;
 }
 
+message UpdateProfileResponse {
+  // @inject_tag: json:"user"
+  UserInfo user = 1;
+  // @inject_tag: json:"profile"
+  UserProfile profile = 2;
+  // @inject_tag: json:"identities"
+  repeated UserIdentity identities = 3;
+}
+
 message UpdateEmailRequest {
   // @inject_tag: json:"email"
   string email = 1;
   // @inject_tag: json:"emailCode"
   string email_code = 2;
+}
+
+message UpdateEmailResponse {
 }
 
 message UpdatePhoneRequest {
@@ -240,9 +290,23 @@ message UpdatePhoneRequest {
   string sms_code = 2;
 }
 
-message CurrentPasswordRequest {
+message UpdatePhoneResponse {
+}
+
+message UnbindEmailRequest {
   // @inject_tag: json:"currentPassword"
   string current_password = 1;
+}
+
+message UnbindEmailResponse {
+}
+
+message UnbindPhoneRequest {
+  // @inject_tag: json:"currentPassword"
+  string current_password = 1;
+}
+
+message UnbindPhoneResponse {
 }
 
 message UpdatePasswordRequest {
@@ -252,9 +316,31 @@ message UpdatePasswordRequest {
   string new_password = 2;
 }
 
+message UpdatePasswordResponse {
+}
+
+message SessionsRequest {
+}
+
 message SessionsResponse {
   // @inject_tag: json:"sessions"
   repeated UserSession sessions = 1;
   // @inject_tag: json:"currentSessionId"
   int64 current_session_id = 2;
+}
+
+message RevokeSessionRequest {
+  // @inject_tag: json:"sessionId"
+  uint64 session_id = 1;
+}
+
+message RevokeSessionResponse {
+}
+
+message RevokeAllSessionsRequest {
+  // @inject_tag: json:"currentPassword"
+  string current_password = 1;
+}
+
+message RevokeAllSessionsResponse {
 }

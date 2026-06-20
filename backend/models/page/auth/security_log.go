@@ -1,18 +1,17 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
 
 	"github.com/zxh3032/two-to/backend/library/security"
+	"github.com/zxh3032/two-to/backend/library/servlet"
 	"github.com/zxh3032/two-to/backend/models/dao"
 	"github.com/zxh3032/two-to/backend/models/data"
-	"github.com/zxh3032/two-to/backend/models/page/pagectx"
 	"go.uber.org/zap"
 )
 
 // logSecurity 记录安全事件，detail 必须使用脱敏后的摘要，不能写入密码、验证码或 token。
-func (s *Service) logSecurity(ctx context.Context, userID uint64, eventType string, detail map[string]string, meta pagectx.RequestMeta) {
+func (s *Service) logSecurity(ctx *servlet.Context, userID uint64, eventType string, detail map[string]string) {
 	if !s.store.DBReady() {
 		return
 	}
@@ -22,8 +21,8 @@ func (s *Service) logSecurity(ctx context.Context, userID uint64, eventType stri
 		UserID:        userID,
 		EventType:     eventType,
 		Detail:        string(raw),
-		IPHash:        security.ClientIPHash(meta.IP),
-		UserAgentHash: security.HashPlain(meta.UserAgent),
+		IPHash:        security.ClientIPHash(ctx.IP),
+		UserAgentHash: security.HashPlain(ctx.UserAgent),
 		BaseModel:     dao.NewBaseModel(dao.SecurityLogStatusNormal, now),
 	}); err != nil {
 		s.log.Error("安全日志写入失败", zap.Error(err))

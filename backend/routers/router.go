@@ -10,6 +10,7 @@ import (
 	authLibrary "github.com/zxh3032/two-to/backend/library/auth"
 	"github.com/zxh3032/two-to/backend/library/cache"
 	"github.com/zxh3032/two-to/backend/library/config"
+	"github.com/zxh3032/two-to/backend/library/servlet"
 	"github.com/zxh3032/two-to/backend/middlewares"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -37,57 +38,56 @@ func NewRouter(cfg config.Config, log *zap.Logger, db *gorm.DB, cacheStore cache
 		apiV1.GET("/slogan", slogan.Get(log))
 
 		tokenManager := authLibrary.NewTokenManager(cfg.Token)
+		rt := servlet.Runtime{Config: cfg, Log: log, DB: db, Cache: cacheStore, TokenManager: tokenManager}
 
 		// auth 分组是未登录也可以访问的账号入口，覆盖验证码、登录、注册、找回密码和 token 刷新。
 		authGroup := apiV1.Group("/auth")
 		{
-			authHandler := authController.NewHandler(cfg, log, db, cacheStore, tokenManager)
 			// GET /api/v1/auth/captcha 生成图片验证码，供发送短信/邮件验证码和登录风控使用。
-			authGroup.GET("/captcha", authHandler.Captcha)
+			authGroup.GET("/captcha", authController.Captcha(rt))
 			// POST /api/v1/auth/send-code 发送短信或邮箱 6 位验证码，发送前必须校验图片验证码。
-			authGroup.POST("/send-code", authHandler.SendCode)
+			authGroup.POST("/send-code", authController.SendCode(rt))
 			// POST /api/v1/auth/email-login 使用邮箱和密码登录，失败达到阈值后要求图片验证码。
-			authGroup.POST("/email-login", authHandler.EmailLogin)
+			authGroup.POST("/email-login", authController.EmailLogin(rt))
 			// POST /api/v1/auth/phone-login 使用 +86 手机号验证码登录；新手机号会进入资料完善流程。
-			authGroup.POST("/phone-login", authHandler.PhoneLogin)
+			authGroup.POST("/phone-login", authController.PhoneLogin(rt))
 			// POST /api/v1/auth/email-register/verify 校验邮箱注册验证码和密码，只签发资料完善 token，不直接创建账号。
-			authGroup.POST("/email-register/verify", authHandler.EmailRegisterVerify)
+			authGroup.POST("/email-register/verify", authController.EmailRegisterVerify(rt))
 			// POST /api/v1/auth/complete-profile 提交昵称和画像资料，完成账号创建并直接登录。
-			authGroup.POST("/complete-profile", authHandler.CompleteProfile)
+			authGroup.POST("/complete-profile", authController.CompleteProfile(rt))
 			// POST /api/v1/auth/refresh 使用 refresh token 轮换并签发新的 access token。
-			authGroup.POST("/refresh", authHandler.Refresh)
+			authGroup.POST("/refresh", authController.Refresh(rt))
 			// POST /api/v1/auth/logout 退出当前 refresh token 对应的设备会话。
-			authGroup.POST("/logout", authHandler.Logout)
+			authGroup.POST("/logout", authController.Logout(rt))
 			// POST /api/v1/auth/forgot-password/verify-code 校验找回密码验证码并签发重置密码 token。
-			authGroup.POST("/forgot-password/verify-code", authHandler.ForgotPasswordVerifyCode)
+			authGroup.POST("/forgot-password/verify-code", authController.ForgotPasswordVerifyCode(rt))
 			// POST /api/v1/auth/forgot-password/reset 使用重置密码 token 设置新密码并撤销历史会话。
-			authGroup.POST("/forgot-password/reset", authHandler.ForgotPasswordReset)
+			authGroup.POST("/forgot-password/reset", authController.ForgotPasswordReset(rt))
 		}
 
 		// account 分组必须先通过 access token 鉴权，接口只允许操作当前登录用户自己的账号数据。
 		accountGroup := apiV1.Group("/account", middlewares.Auth(tokenManager, cacheStore, db, log))
 		{
-			accountHandler := accountController.NewHandler(cfg, log, db, cacheStore, tokenManager)
 			// GET /api/v1/account/me 返回当前用户、画像和已绑定联系方式。
-			accountGroup.GET("/me", accountHandler.Me)
+			accountGroup.GET("/me", accountController.Me(rt))
 			// PATCH /api/v1/account/profile 更新昵称和基础画像资料。
-			accountGroup.PATCH("/profile", accountHandler.UpdateProfile)
+			accountGroup.PATCH("/profile", accountController.UpdateProfile(rt))
 			// PUT /api/v1/account/security/email 绑定或更换邮箱。
-			accountGroup.PUT("/security/email", accountHandler.UpdateEmail)
+			accountGroup.PUT("/security/email", accountController.UpdateEmail(rt))
 			// PUT /api/v1/account/security/phone 绑定或更换中国大陆手机号。
-			accountGroup.PUT("/security/phone", accountHandler.UpdatePhone)
+			accountGroup.PUT("/security/phone", accountController.UpdatePhone(rt))
 			// DELETE /api/v1/account/security/email 解绑邮箱，解绑前校验当前密码并保证至少保留一种联系方式。
-			accountGroup.DELETE("/security/email", accountHandler.UnbindEmail)
+			accountGroup.DELETE("/security/email", accountController.UnbindEmail(rt))
 			// DELETE /api/v1/account/security/phone 解绑手机号，解绑前校验当前密码并保证至少保留一种联系方式。
-			accountGroup.DELETE("/security/phone", accountHandler.UnbindPhone)
+			accountGroup.DELETE("/security/phone", accountController.UnbindPhone(rt))
 			// PUT /api/v1/account/security/password 修改密码，成功后撤销其他设备会话。
-			accountGroup.PUT("/security/password", accountHandler.UpdatePassword)
+			accountGroup.PUT("/security/password", accountController.UpdatePassword(rt))
 			// GET /api/v1/account/sessions 查询当前账号所有设备会话。
-			accountGroup.GET("/sessions", accountHandler.Sessions)
+			accountGroup.GET("/sessions", accountController.Sessions(rt))
 			// DELETE /api/v1/account/sessions/:sessionId 踢出指定非当前设备。
-			accountGroup.DELETE("/sessions/:sessionId", accountHandler.RevokeSession)
+			accountGroup.DELETE("/sessions/:sessionId", accountController.RevokeSession(rt))
 			// POST /api/v1/account/sessions/revoke-all 退出全部设备，适合用户发现账号异常时使用。
-			accountGroup.POST("/sessions/revoke-all", accountHandler.RevokeAllSessions)
+			accountGroup.POST("/sessions/revoke-all", accountController.RevokeAllSessions(rt))
 		}
 	}
 

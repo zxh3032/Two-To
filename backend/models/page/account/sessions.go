@@ -1,21 +1,20 @@
 package account
 
 import (
-	"context"
-
+	"github.com/zxh3032/two-to/backend/library/servlet"
 	"github.com/zxh3032/two-to/backend/proto"
 )
 
 // Sessions 返回当前账号的登录设备列表，并标记当前 access token 对应的会话。
-func (s *Service) Sessions(ctx context.Context, userID uint64, currentSessionID uint64) (*proto.SessionsResponse, error) {
+func (s *Service) Sessions(ctx *servlet.Context, _ *proto.SessionsRequest, resp *proto.SessionsResponse) error {
 	if err := s.requireDB(); err != nil {
-		return nil, err
+		return err
 	}
-	sessions, err := s.store.ListSessions(ctx, userID)
+	sessions, err := s.store.ListSessions(ctx, ctx.UserID)
 	if err != nil {
-		return nil, internalError(err)
+		return internalError(err)
 	}
-	resp := &proto.SessionsResponse{CurrentSessionId: int64(currentSessionID)}
+	resp.CurrentSessionId = int64(ctx.SessionID)
 	for _, session := range sessions {
 		resp.Sessions = append(resp.Sessions, &proto.UserSession{
 			Id:             int64(session.ID),
@@ -23,8 +22,8 @@ func (s *Service) Sessions(ctx context.Context, userID uint64, currentSessionID 
 			Status:         session.Status,
 			LastActiveTime: session.LastActiveTime,
 			ExpireTime:     session.ExpireTime,
-			Current:        session.ID == currentSessionID,
+			Current:        session.ID == ctx.SessionID,
 		})
 	}
-	return resp, nil
+	return nil
 }

@@ -1,11 +1,11 @@
 package ping
 
 import (
-	"context"
 	"errors"
 	"time"
 
 	"github.com/zxh3032/two-to/backend/library/config"
+	"github.com/zxh3032/two-to/backend/library/servlet"
 	"github.com/zxh3032/two-to/backend/proto"
 	"go.uber.org/zap"
 )
@@ -25,20 +25,19 @@ func New(cfg config.Config, log *zap.Logger) *Page {
 }
 
 // Handle 处理 ping 请求，返回服务基础信息和本次请求的链路追踪 ID。
-func (p *Page) Handle(ctx context.Context, req *proto.PingRequest) (*proto.PingResponse, error) {
+func (p *Page) Handle(ctx *servlet.Context, req *proto.PingRequest, resp *proto.PingResponse) error {
 	if req == nil {
-		return nil, errors.New("ping request is nil")
+		return errors.New("ping request is nil")
 	}
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return err
 	}
 
-	p.log.Info("处理 ping 请求", zap.String("requestId", req.GetRequestId()))
-	return &proto.PingResponse{
-		Message:     "pong",
-		Service:     p.cfg.AppName,
-		Environment: p.cfg.Env,
-		RequestId:   req.GetRequestId(),
-		Timestamp:   time.Now().Unix(),
-	}, nil
+	p.log.Info("处理 ping 请求", zap.String("requestId", ctx.RequestID))
+	resp.Message = "pong"
+	resp.Service = p.cfg.AppName
+	resp.Environment = p.cfg.Env
+	resp.RequestId = ctx.RequestID
+	resp.Timestamp = time.Now().Unix()
+	return nil
 }

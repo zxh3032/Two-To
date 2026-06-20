@@ -4,6 +4,24 @@ package twoto.system.v1;
 
 option go_package = "github.com/zxh3032/two-to/backend/proto;proto";
 
+message HealthRequest {
+}
+
+message HealthResponse {
+  // @inject_tag: json:"status"
+  // status 表示服务整体健康状态，正常为 ok，降级为 degraded。
+  string status = 1;
+  // @inject_tag: json:"service"
+  // service 表示响应本次请求的后端服务名。
+  string service = 2;
+  // @inject_tag: json:"environment"
+  // environment 表示当前服务运行环境，例如 development、test、production。
+  string environment = 3;
+  // @inject_tag: json:"database"
+  // database 表示数据库连接状态，未配置时为 not_configured。
+  string database = 4;
+}
+
 message PingRequest {
   // @inject_tag: json:"requestId"
   // request_id 是本次请求的链路追踪 ID，由中间件生成或透传。

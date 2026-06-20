@@ -9,10 +9,10 @@ import (
 	"github.com/zxh3032/two-to/backend/library/apperror"
 	"github.com/zxh3032/two-to/backend/library/response"
 	"github.com/zxh3032/two-to/backend/library/security"
+	"github.com/zxh3032/two-to/backend/library/servlet"
 	"github.com/zxh3032/two-to/backend/library/verification"
 	"github.com/zxh3032/two-to/backend/models/dao"
 	"github.com/zxh3032/two-to/backend/models/data"
-	"github.com/zxh3032/two-to/backend/models/page/pagectx"
 	"go.uber.org/zap"
 )
 
@@ -81,7 +81,7 @@ func (s *Service) checkSendRateLimit(ctx context.Context, scene string, target s
 }
 
 // auditVerificationCode 写入验证码发送审计。cache 是校验事实源，MySQL 是安全审计来源。
-func (s *Service) auditVerificationCode(ctx context.Context, codeType int32, scene string, target string, code string, provider string, meta pagectx.RequestMeta) {
+func (s *Service) auditVerificationCode(ctx *servlet.Context, codeType int32, scene string, target string, code string, provider string) {
 	if !s.store.DBReady() {
 		return
 	}
@@ -92,8 +92,8 @@ func (s *Service) auditVerificationCode(ctx context.Context, codeType int32, sce
 		Target:        target,
 		CodeHash:      s.tokenManager.HashCode(code),
 		ExpireTime:    now + s.cfg.Verification.CodeTTLSeconds,
-		IPHash:        security.ClientIPHash(meta.IP),
-		UserAgentHash: security.HashPlain(meta.UserAgent),
+		IPHash:        security.ClientIPHash(ctx.IP),
+		UserAgentHash: security.HashPlain(ctx.UserAgent),
 		Provider:      provider,
 		BaseModel:     dao.NewBaseModel(dao.VerificationStatusUnused, now),
 	}); err != nil {
@@ -117,7 +117,7 @@ func (s *Service) currentFailCount(ctx context.Context, key string) int64 {
 }
 
 // recordLoginFailure 同步记录 Redis 失败计数和 MySQL 审计记录。
-func (s *Service) recordLoginFailure(ctx context.Context, key string, identityType int32, identityValue string, meta pagectx.RequestMeta) {
+func (s *Service) recordLoginFailure(ctx *servlet.Context, key string, identityType int32, identityValue string) {
 	count, err := s.cacheStore.IncrWithTTL(ctx, key, 15*time.Minute)
 	if err != nil {
 		s.log.Error("登录失败计数写入 cache 失败", zap.Error(err))
@@ -127,7 +127,7 @@ func (s *Service) recordLoginFailure(ctx context.Context, key string, identityTy
 		_ = s.store.UpsertLoginAttempt(ctx, &dao.LoginAttempt{
 			IdentityType:  identityType,
 			IdentityValue: identityValue,
-			IPHash:        security.ClientIPHash(meta.IP),
+			IPHash:        security.ClientIPHash(ctx.IP),
 			FailCount:     int32(count),
 			LastFailTime:  now,
 			BaseModel:     dao.NewBaseModel(dao.LoginAttemptStatusNormal, now),
