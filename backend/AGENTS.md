@@ -152,6 +152,8 @@ cmd
 - 不写复杂业务判断。
 - 不拼装复杂聚合数据。
 - 请求参数含义不清时，不在 controller 内临时猜测，应先补 proto 注释或待确认说明。
+- HTTP 接口主流程必须一个路由一个 controller 文件，文件名按动作命名，例如 `email_login.go`、`update_profile.go`、`revoke_session.go`。
+- controller 模块内的 `handler.go` 只放 `Handler` 结构体、构造函数、通用 bind/write/meta 等薄适配 helper，不承载具体接口主流程。
 
 ### proto
 
@@ -195,6 +197,8 @@ cmd
 - 不直接写 SQL 细节。
 - 不处理 HTTP request/response。
 - 不把通用工具随意塞入 page；多模块复用后再下沉到 `library`。
+- 对外暴露给 controller 调用的 page 方法必须一个接口一个文件，并尽量与 controller 文件同名，例如 `email_login.go` 对应 `EmailLogin`。
+- page 模块内的 `service.go` 只放 `Service` 结构体、构造函数和模块级常量；共享能力按职责拆成 `verification.go`、`identity.go`、`profile.go`、`security_log.go`、`errors.go` 等文件，不再堆回一个大文件。
 
 ### models/data
 
@@ -214,6 +218,8 @@ cmd
 - 不处理页面展示逻辑。
 - 不做用户权限判断，权限由 page 层负责。
 - 不新增物理删除；删除语义优先遵循逻辑删除。
+- data 层不按 HTTP 接口拆文件，而是按数据对象或数据能力拆分，例如 `user.go`、`identity.go`、`session.go`、`verification_code.go`。
+- `store.go` 只放 `Store`、`NewStore`、DB 可用性检查和事务基础能力，不承载具体业务对象读写。
 
 ### models/dao
 
@@ -382,6 +388,9 @@ Go 导出标识建议：
 新增接口时还必须检查：
 
 - 路由是否按 Gin group 使用 `{}` 聚合。
+- controller 是否做到一个路由一个文件，`handler.go` 是否只保留公共适配能力。
+- page 是否做到一个接口业务方法一个文件，`service.go` 是否只保留结构体、构造函数和常量。
+- data 是否按数据对象或能力拆文件，避免重新形成单个 `store.go` 大文件。
 - controller 是否统一使用 `response.WriteResult`、`response.WriteError` 或 `response.WriteErrorData` 输出失败。
 - page 层内部错误是否隐藏原始错误文本，只通过日志保留 cause。
 - data 层失败是否能通过 request id、module、action、业务 ID 和原始 error 定位。
@@ -437,9 +446,9 @@ git log --format=%s -- backend | rg '^tutu-[0-9]{4}' | head -1
 新增模块建议：
 
 - 模块名使用小写单词，必要时使用下划线，不使用短横线作为 Go package 名。
-- controller 文件按动作命名，例如 `create.go`、`list.go`、`detail.go`。
-- page 结构按业务动作命名，例如 `PagePetCreate`、`PageBreedList`。
-- data 结构按领域对象命名，例如 `PetData`、`BreedData`。
+- controller 文件按接口动作命名，例如 `create.go`、`list.go`、`detail.go`，每个文件只承载一个路由主流程。
+- page 文件按接口动作命名，例如 `create.go`、`list.go`、`detail.go`，每个文件只承载一个接口业务主流程。
+- data 文件按领域对象或数据能力命名，例如 `pet.go`、`breed.go`、`session.go`。
 - DAO 结构按表模型命名，例如 `PetProfile`、`BreedInfo`。
 
 ## 待确认事项
