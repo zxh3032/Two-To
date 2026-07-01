@@ -22,6 +22,7 @@ type Store interface {
 	Key(parts ...string) string
 	Get(ctx context.Context, key string) (string, error)
 	Set(ctx context.Context, key string, value string, ttl time.Duration) error
+	SetNX(ctx context.Context, key string, value string, ttl time.Duration) (bool, error)
 	Del(ctx context.Context, keys ...string) error
 	IncrWithTTL(ctx context.Context, key string, ttl time.Duration) (int64, error)
 	TTL(ctx context.Context, key string) (time.Duration, error)
@@ -74,6 +75,11 @@ func (s *RedisStore) Get(ctx context.Context, key string) (string, error) {
 // Set 写入带 TTL 的 Redis 字符串值，验证码和会话都必须设置过期时间。
 func (s *RedisStore) Set(ctx context.Context, key string, value string, ttl time.Duration) error {
 	return s.client.Set(ctx, key, value, ttl).Err()
+}
+
+// SetNX 在 key 不存在时写入值，适合实现短期锁和节流标记。
+func (s *RedisStore) SetNX(ctx context.Context, key string, value string, ttl time.Duration) (bool, error) {
+	return s.client.SetNX(ctx, key, value, ttl).Result()
 }
 
 // Del 删除一个或多个 Redis key，调用方可安全传入空列表。
@@ -152,6 +158,19 @@ func (s *MemoryStore) Set(_ context.Context, key string, value string, ttl time.
 	defer s.mu.Unlock()
 	s.items[key] = memoryItem{value: value, expireTime: time.Now().Add(ttl)}
 	return nil
+}
+
+// SetNX 在内存 cache 中模拟 Redis SET NX 语义。
+func (s *MemoryStore) SetNX(_ context.Context, key string, value string, ttl time.Duration) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	now := time.Now()
+	item, ok := s.items[key]
+	if ok && !item.expired(now) {
+		return false, nil
+	}
+	s.items[key] = memoryItem{value: value, expireTime: now.Add(ttl)}
+	return true, nil
 }
 
 // Del 删除内存 cache key，支持批量删除。

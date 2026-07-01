@@ -28,6 +28,9 @@ func main() {
 	defer func() {
 		_ = log.Sync()
 	}()
+	if err := cfg.ValidateStartup(); err != nil {
+		log.Fatal("启动配置校验失败", zap.Error(err))
+	}
 
 	initCtx, cancelInit := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelInit()

@@ -22,7 +22,14 @@ func (s *Service) EmailLogin(ctx *servlet.Context, req *proto.EmailLoginRequest,
 		return apperror.BadRequest(response.CodeBadRequest, err.Error())
 	}
 	failKey := s.loginFailKey(emailValue, ctx.IP)
-	failCount := s.currentFailCount(ctx, failKey)
+	lockKey := s.loginLockKey(emailValue, ctx.IP)
+	if err := s.checkLoginLock(ctx, lockKey); err != nil {
+		return err
+	}
+	failCount, err := s.currentFailCount(ctx, failKey)
+	if err != nil {
+		return err
+	}
 	// 失败次数达到阈值后启用图片验证码；验证码缺失时通过 data 告诉前端展示验证码。
 	if failCount >= s.cfg.Verification.LoginCaptchaFailThreshold {
 		if err := s.verifyCaptcha(ctx, req.GetCaptchaId(), req.GetCaptchaCode()); err != nil {
@@ -37,19 +44,17 @@ func (s *Service) EmailLogin(ctx *servlet.Context, req *proto.EmailLoginRequest,
 	}
 	if identity == nil {
 		// 不暴露邮箱是否存在，避免账号枚举；同时记录失败计数。
-		s.recordLoginFailure(ctx, failKey, dao.IdentityTypeEmail, emailValue)
-		return apperror.Unauthorized(response.CodeUnauthorized, "账号或密码不正确")
+		return s.rejectEmailLogin(ctx, failKey, lockKey, emailValue)
 	}
 	user, err := s.store.FindUser(ctx, identity.UserID)
 	if err != nil {
 		return internalError(err)
 	}
 	if user == nil || user.Status != dao.UserStatusNormal || !authlib.CheckPassword(user.PasswordHash, req.GetPassword()) {
-		s.recordLoginFailure(ctx, failKey, dao.IdentityTypeEmail, emailValue)
-		return apperror.Unauthorized(response.CodeUnauthorized, "账号或密码不正确")
+		return s.rejectEmailLogin(ctx, failKey, lockKey, emailValue)
 	}
 	// 登录成功后清理失败计数，并签发新的设备会话。
-	_ = s.cacheStore.Del(ctx, failKey)
+	_ = s.cacheStore.Del(ctx, failKey, lockKey)
 	s.logSecurity(ctx, user.ID, "email_login", map[string]string{"email": security.MaskEmail(emailValue)})
 	authResp, err := s.issueLogin(ctx, user)
 	if err != nil {
@@ -57,4 +62,15 @@ func (s *Service) EmailLogin(ctx *servlet.Context, req *proto.EmailLoginRequest,
 	}
 	fillEmailLoginResponse(resp, authResp)
 	return nil
+}
+
+func (s *Service) rejectEmailLogin(ctx *servlet.Context, failKey string, lockKey string, emailValue string) error {
+	count, err := s.recordLoginFailure(ctx, failKey, lockKey, dao.IdentityTypeEmail, emailValue)
+	if err != nil {
+		return err
+	}
+	if count >= s.maxLoginFailuresBeforeLock() {
+		return s.checkLoginLock(ctx, lockKey)
+	}
+	return apperror.Unauthorized(response.CodeUnauthorized, "账号或密码不正确")
 }

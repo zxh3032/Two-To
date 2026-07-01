@@ -2,10 +2,11 @@ package verification
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"strings"
 	"time"
 
@@ -49,13 +50,16 @@ type ResetPayload struct {
 }
 
 // NewDigitCode 生成固定长度数字验证码，首期短信和邮箱都使用 6 位数字。
-func NewDigitCode(length int) string {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+func NewDigitCode(length int) (string, error) {
 	var builder strings.Builder
 	for i := 0; i < length; i++ {
-		builder.WriteByte(byte('0' + r.Intn(10)))
+		n, err := randomInt(10)
+		if err != nil {
+			return "", err
+		}
+		builder.WriteByte(byte('0' + n))
 	}
-	return builder.String()
+	return builder.String(), nil
 }
 
 // NewCaptcha 生成图片验证码 ID、答案和可直接给前端展示的 base64 SVG。
@@ -64,10 +68,13 @@ func NewCaptcha() (id string, code string, imageBase64 string, err error) {
 	if err != nil {
 		return "", "", "", err
 	}
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var builder strings.Builder
 	for i := 0; i < 4; i++ {
-		builder.WriteRune(captchaChars[r.Intn(len(captchaChars))])
+		index, err := randomInt(len(captchaChars))
+		if err != nil {
+			return "", "", "", err
+		}
+		builder.WriteRune(captchaChars[index])
 	}
 	code = builder.String()
 	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="56" viewBox="0 0 160 56">
@@ -77,6 +84,14 @@ func NewCaptcha() (id string, code string, imageBase64 string, err error) {
 <text x="80" y="37" text-anchor="middle" font-family="Verdana, sans-serif" font-size="27" font-weight="700" letter-spacing="6" fill="#3a2418">%s</text>
 </svg>`, code)
 	return token, code, "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(svg)), nil
+}
+
+func randomInt(max int) (int, error) {
+	n, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		return 0, err
+	}
+	return int(n.Int64()), nil
 }
 
 // StoreJSON 将短期流程数据序列化后写入 cache，例如资料完善 token 和重置密码 token。

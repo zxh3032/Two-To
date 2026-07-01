@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -46,7 +47,11 @@ func Auth(tokenManager *authlib.TokenManager, cacheStore cache.Store, db *gorm.D
 func validateSession(ctx *gin.Context, cacheStore cache.Store, db *gorm.DB, log *zap.Logger, userID uint64, sessionID uint64) bool {
 	cached, err := authlib.GetCachedSession(ctx.Request.Context(), cacheStore, sessionID)
 	if err == nil {
-		return cached.UserID == userID && cached.ExpireTime > time.Now().Unix()
+		if cached.UserID != userID || cached.ExpireTime <= time.Now().Unix() {
+			return false
+		}
+		updateLastActiveThrottled(ctx, cacheStore, db, log, sessionID)
+		return true
 	}
 	// Redis 不可用或缓存过期时，MySQL 是最终的会话状态来源。
 	if db == nil {
@@ -73,6 +78,21 @@ func validateSession(ctx *gin.Context, cacheStore cache.Store, db *gorm.DB, log 
 	}
 	updateLastActive(ctx, db, sessionID)
 	return true
+}
+
+func updateLastActiveThrottled(ctx *gin.Context, cacheStore cache.Store, db *gorm.DB, log *zap.Logger, sessionID uint64) {
+	if db == nil {
+		return
+	}
+	key := cacheStore.Key("session-active", strconv.FormatUint(sessionID, 10))
+	ok, err := cacheStore.SetNX(ctx.Request.Context(), key, "1", time.Minute)
+	if err != nil {
+		log.Error("写入 session 活跃时间节流标记失败", zap.Uint64("sessionID", sessionID), zap.Error(err))
+		return
+	}
+	if ok {
+		updateLastActive(ctx, db, sessionID)
+	}
 }
 
 // updateLastActive 轻量记录设备活跃时间，失败不影响本次鉴权结果。

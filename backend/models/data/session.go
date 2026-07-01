@@ -59,6 +59,25 @@ func (s *Store) UpdateSessionRefreshToken(ctx context.Context, sessionID uint64,
 		}).Error
 }
 
+// UpdateSessionRefreshTokenIfMatch 原子轮换 refresh token，避免并发刷新覆盖彼此的新 token。
+func (s *Store) UpdateSessionRefreshTokenIfMatch(ctx context.Context, sessionID uint64, oldRefreshHash string, newRefreshHash string, lastActiveTime int64, expireTime int64) (bool, error) {
+	if err := s.ensureDB(); err != nil {
+		return false, err
+	}
+	result := s.db.WithContext(ctx).Model(&dao.UserSession{}).
+		Where("id = ? AND refresh_token_hash = ? AND status = ?", sessionID, oldRefreshHash, dao.SessionStatusNormal).
+		Updates(map[string]interface{}{
+			"refresh_token_hash": newRefreshHash,
+			"last_active_time":   lastActiveTime,
+			"expire_time":        expireTime,
+			"update_time":        lastActiveTime,
+		})
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
 // RevokeSession 撤销单个设备会话。userID 大于 0 时会限制只能操作当前用户自己的设备。
 func (s *Store) RevokeSession(ctx context.Context, sessionID uint64, userID uint64, status int32, reason string, now int64) error {
 	if err := s.ensureDB(); err != nil {

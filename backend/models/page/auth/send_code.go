@@ -43,8 +43,12 @@ func (s *Service) SendCode(ctx *servlet.Context, req *proto.SendCodeRequest, res
 	}
 
 	// 明文验证码只写入 cache；MySQL 审计表只存 hash，避免验证码泄露风险。
-	code := verification.NewDigitCode(6)
+	code, err := verification.NewDigitCode(6)
+	if err != nil {
+		return internalError(err)
+	}
 	codeKey := s.cacheStore.Key("verify-code", scene, target)
+	_ = s.cacheStore.Del(ctx, s.verificationAttemptKey(scene, target))
 	if err := s.cacheStore.Set(ctx, codeKey, code, time.Duration(s.cfg.Verification.CodeTTLSeconds)*time.Second); err != nil {
 		return internalError(err)
 	}

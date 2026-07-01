@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -38,7 +39,10 @@ type VerificationConfig struct {
 	CodeTargetHourlyLimit     int64
 	CodeTargetDailyLimit      int64
 	CodeIPHourlyLimit         int64
+	CodeMaxAttempts           int64
 	LoginCaptchaFailThreshold int64
+	LoginLockFailThreshold    int64
+	LoginLockTTLSeconds       int64
 }
 
 // CacheConfig 保存 Redis 与本地内存 cache 的运行配置。
@@ -112,7 +116,10 @@ func Load() Config {
 			CodeTargetHourlyLimit:     int64OrDefault("TWO_TO_CODE_TARGET_HOURLY_LIMIT", 5),
 			CodeTargetDailyLimit:      int64OrDefault("TWO_TO_CODE_TARGET_DAILY_LIMIT", 10),
 			CodeIPHourlyLimit:         int64OrDefault("TWO_TO_CODE_IP_HOURLY_LIMIT", 30),
+			CodeMaxAttempts:           int64OrDefault("TWO_TO_VERIFICATION_CODE_MAX_ATTEMPTS", 5),
 			LoginCaptchaFailThreshold: int64OrDefault("TWO_TO_LOGIN_CAPTCHA_FAIL_THRESHOLD", 3),
+			LoginLockFailThreshold:    int64OrDefault("TWO_TO_LOGIN_LOCK_FAIL_THRESHOLD", 5),
+			LoginLockTTLSeconds:       int64OrDefault("TWO_TO_LOGIN_LOCK_TTL_SECONDS", 900),
 		},
 		Cache: CacheConfig{
 			Driver:    strings.ToLower(envOrDefault("TWO_TO_CACHE_DRIVER", defaultCacheDriver(env))),
@@ -155,6 +162,68 @@ func Load() Config {
 // IsProduction 判断当前是否为生产环境，用于切换日志和 Gin 运行模式。
 func (c Config) IsProduction() bool {
 	return c.Env == "production" || c.Env == "prod"
+}
+
+// ValidateStartup 对启动配置做环境级校验，生产环境必须显式配置安全依赖。
+func (c Config) ValidateStartup() error {
+	if !c.IsProduction() {
+		return nil
+	}
+	var problems []string
+	if strings.TrimSpace(c.MySQLDSN) == "" {
+		problems = append(problems, "TWO_TO_MYSQL_DSN 不能为空")
+	}
+	if weakSecret(c.Token.AccessSecret, "two-to-dev-access-secret") {
+		problems = append(problems, "TWO_TO_ACCESS_TOKEN_SECRET 必须改为高强度随机密钥")
+	}
+	if weakSecret(c.Token.RefreshSecret, "two-to-dev-refresh-secret") {
+		problems = append(problems, "TWO_TO_REFRESH_TOKEN_SECRET 必须改为高强度随机密钥")
+	}
+	if strings.ToLower(strings.TrimSpace(c.Cache.Driver)) != "redis" {
+		problems = append(problems, "生产环境 TWO_TO_CACHE_DRIVER 必须为 redis")
+	}
+	if strings.TrimSpace(c.Cache.RedisAddr) == "" {
+		problems = append(problems, "TWO_TO_REDIS_ADDR 不能为空")
+	}
+	if strings.TrimSpace(c.SMTP.Host) == "" || strings.TrimSpace(c.SMTP.From) == "" {
+		problems = append(problems, "生产环境必须配置 SMTP Host 和 From")
+	}
+	if smsPrimaryInvalid(c.SMS.PrimaryProvider) {
+		problems = append(problems, "生产环境 TWO_TO_SMS_PRIMARY_PROVIDER 必须配置真实供应商")
+	}
+	if strings.ToLower(strings.TrimSpace(c.SMS.BackupProvider)) == "mock" {
+		problems = append(problems, "生产环境 TWO_TO_SMS_BACKUP_PROVIDER 不能使用 mock")
+	}
+	for _, provider := range []string{c.SMS.PrimaryProvider, c.SMS.BackupProvider} {
+		switch strings.ToLower(strings.TrimSpace(provider)) {
+		case "", "mock":
+			continue
+		case "aliyun":
+			if c.SMS.Aliyun.AccessKeyID == "" || c.SMS.Aliyun.AccessKeySecret == "" || c.SMS.Aliyun.SignName == "" || c.SMS.Aliyun.TemplateCode == "" {
+				problems = append(problems, "阿里云短信配置不完整")
+			}
+		case "volcengine":
+			if c.SMS.Volcengine.AccessKeyID == "" || c.SMS.Volcengine.AccessKeySecret == "" || c.SMS.Volcengine.SignName == "" || c.SMS.Volcengine.TemplateID == "" || c.SMS.Volcengine.SMSAccount == "" {
+				problems = append(problems, "火山云短信配置不完整")
+			}
+		default:
+			problems = append(problems, fmt.Sprintf("未知短信供应商: %s", provider))
+		}
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("生产配置校验失败: %s", strings.Join(problems, "；"))
+	}
+	return nil
+}
+
+func weakSecret(value string, defaultValue string) bool {
+	value = strings.TrimSpace(value)
+	return value == "" || value == defaultValue || len(value) < 32
+}
+
+func smsPrimaryInvalid(provider string) bool {
+	provider = strings.ToLower(strings.TrimSpace(provider))
+	return provider == "mock" || provider == ""
 }
 
 // envOrDefault 集中处理环境变量默认值，避免启动配置分散在 main 中。
