@@ -1,5 +1,4 @@
-import { Sparkles } from 'lucide-react';
-import { useMemo } from 'react';
+import { CheckCircle2, Route, ShieldCheck, Sparkles } from 'lucide-react';
 
 type AnimalMode = 'idle' | 'account' | 'password' | 'secret';
 
@@ -7,25 +6,19 @@ interface AuthAnimalStageProps {
   mode: AnimalMode;
 }
 
-// AuthAnimalStage 承载登录页左侧品牌区，用油画场景表达 Two-To 的宠物陪伴气质。
+const stageItems = [
+  { icon: CheckCircle2, title: '先判断', text: '把养宠前的状态、时间和限制梳理清楚。' },
+  { icon: Route, title: '再选择', text: '用适配逻辑连接品种、性格和照护成本。' },
+  { icon: ShieldCheck, title: '长期记录', text: '把档案、安全和照护节点留在同一处。' },
+];
+
+// AuthAnimalStage 承载登录页左侧品牌区，用抽象路径表达 Two-To 的适配与陪伴。
 export function AuthAnimalStage({ mode }: AuthAnimalStageProps) {
-  const modeClass = useMemo(() => `brand-stage--${mode}`, [mode]);
-
   return (
-    <section className={`brand-stage ${modeClass}`} aria-label="Two-To 品牌介绍">
-      <div className="brand-stage__art" aria-hidden="true">
-        <picture>
-          <source media="(max-width: 620px)" srcSet="/auth-companion-oil-portrait.png?v=20260618d" />
-          <source media="(max-width: 1100px)" srcSet="/auth-companion-oil-wide.png?v=20260618d" />
-          <img src="/auth-companion-oil-web.png?v=20260618d" alt="" />
-        </picture>
-      </div>
-      <div className="brand-stage__paint" aria-hidden="true" />
-      <div className="brand-stage__privacy" aria-hidden="true" />
-
+    <section className={`brand-stage brand-stage--${mode}`} aria-label="Two-To 品牌介绍">
       <div className="brand-stage__copy">
         <div className="brand-stage__mark">
-          <img src="/two-to-mark.svg" alt="" />
+          <img src="/two-to-mark.png" alt="" />
           <span>Two-To</span>
         </div>
         <p className="brand-stage__eyebrow">
@@ -33,10 +26,28 @@ export function AuthAnimalStage({ mode }: AuthAnimalStageProps) {
           宠物适配与长期照料
         </p>
         <h1>
-          <span>相逢以后，</span>
-          <span>把心动照料成日常。</span>
+          <span>先判断，</span>
+          <span>再开始认真陪伴。</span>
         </h1>
-        <p>登录后继续测评、档案和照护记录，让每一次相处都有脉络。</p>
+        <p>Two-To 把养前评估、账号资料和照护记录放进一条清晰路径里。</p>
+      </div>
+
+      <div className="brand-stage__path" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+
+      <div className="brand-stage__list">
+        {stageItems.map((item) => (
+          <div className="brand-stage__item" key={item.title}>
+            <item.icon size={17} />
+            <div>
+              <strong>{item.title}</strong>
+              <span>{item.text}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

@@ -11,5 +11,5 @@ export function useCountdown() {
     return () => window.clearTimeout(timer);
   }, [seconds]);
 
-  return { seconds, start: setSeconds };
+  return { seconds, reset: () => setSeconds(0), start: setSeconds };
 }

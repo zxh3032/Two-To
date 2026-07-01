@@ -20,7 +20,7 @@ export function AppLayout() {
     <div className="app-shell">
       <aside className="sidebar" aria-label="主导航">
         <div className="brand">
-          <img className="brand__mark" src="/two-to-mark.svg" alt="" />
+          <img className="brand__mark" src="/two-to-mark.png" alt="" />
           <div>
             <strong>Two-To</strong>
             <span>宠物陪伴服务</span>

@@ -1,4 +1,4 @@
-import { Check, PawPrint } from 'lucide-react';
+import { Check, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -77,7 +77,7 @@ export function SetupProfilePage() {
   }
 
   return (
-    <main className="auth-page">
+    <main className="auth-page auth-page--split">
       <AuthAnimalStage mode="account" />
       <section className="auth-panel auth-panel--wide" aria-labelledby="setup-title">
         <div className="auth-panel__header">
@@ -86,11 +86,17 @@ export function SetupProfilePage() {
           <p>这些信息会用于后续适配测评和推荐排序。</p>
         </div>
 
-        <form className="form-stack" onSubmit={(event) => event.preventDefault()}>
+        <form
+          className="form-stack"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSubmit();
+          }}
+        >
           <label className="field">
             <span>昵称</span>
             <div className="field__control">
-              <PawPrint size={17} />
+              <UserRound size={17} />
               <input value={nickname} onChange={(event) => setNickname(event.target.value)} placeholder="2-20 个字符" />
             </div>
           </label>
@@ -173,7 +179,7 @@ export function SetupProfilePage() {
           </div>
 
           {error ? <p className="form-error">{error}</p> : null}
-          <button className="primary-button" disabled={submitting} onClick={handleSubmit} type="button">
+          <button className="primary-button" disabled={submitting} type="submit">
             <Check size={18} />
             {submitting ? '保存中' : '完成并进入'}
           </button>

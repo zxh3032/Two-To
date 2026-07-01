@@ -1,4 +1,4 @@
-import { Check, KeyRound, Mail, RefreshCcw, Send, ShieldCheck, Smartphone, Trash2 } from 'lucide-react';
+import { Check, KeyRound, Mail, RefreshCcw, Send, ShieldCheck, Smartphone, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '../../app/useAuth';
@@ -18,6 +18,16 @@ import {
 } from '../../shared/api/account';
 import { sendCode } from '../../shared/api/auth';
 
+type SensitiveAction = 'unbind-email' | 'unbind-phone' | 'revoke-all';
+
+interface PasswordDialogState {
+  action: SensitiveAction;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  danger?: boolean;
+}
+
 export function SecurityPage() {
   const auth = useAuth();
   const captcha = useCaptcha();
@@ -34,6 +44,10 @@ export function SecurityPage() {
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [passwordDialog, setPasswordDialog] = useState<PasswordDialogState | null>(null);
+  const [confirmationPassword, setConfirmationPassword] = useState('');
+  const [dialogError, setDialogError] = useState('');
+  const [dialogSubmitting, setDialogSubmitting] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -108,18 +122,12 @@ export function SecurityPage() {
   }
 
   async function handleUnbind(kind: 'email' | 'phone') {
-    const password = window.prompt('输入当前密码');
-    if (!password) {
-      return;
-    }
-    await run(async () => {
-      if (kind === 'email') {
-        await unbindEmail(password);
-      } else {
-        await unbindPhone(password);
-      }
-      await auth.refreshMe();
-      setMessage(kind === 'email' ? '邮箱已解绑' : '手机号已解绑');
+    openPasswordDialog({
+      action: kind === 'email' ? 'unbind-email' : 'unbind-phone',
+      title: kind === 'email' ? '解绑邮箱' : '解绑手机号',
+      description: '请输入当前密码确认本次账号安全变更。',
+      confirmLabel: '确认解绑',
+      danger: true,
     });
   }
 
@@ -142,14 +150,71 @@ export function SecurityPage() {
   }
 
   async function handleRevokeAll() {
-    const password = window.prompt('输入当前密码');
-    if (!password) {
+    openPasswordDialog({
+      action: 'revoke-all',
+      title: '退出全部设备',
+      description: '确认后当前账号会从所有设备退出，需要重新登录。',
+      confirmLabel: '退出全部设备',
+      danger: true,
+    });
+  }
+
+  function openPasswordDialog(nextDialog: PasswordDialogState) {
+    setPasswordDialog(nextDialog);
+    setConfirmationPassword('');
+    setDialogError('');
+    setError('');
+    setMessage('');
+  }
+
+  function closePasswordDialog() {
+    if (dialogSubmitting) {
       return;
     }
-    await run(async () => {
-      await revokeAllSessions(password);
-      await auth.logout();
-    });
+    setPasswordDialog(null);
+    setConfirmationPassword('');
+    setDialogError('');
+  }
+
+  async function handleConfirmPasswordDialog() {
+    if (!passwordDialog) {
+      return;
+    }
+    if (!confirmationPassword) {
+      setDialogError('请输入当前密码');
+      return;
+    }
+
+    setDialogSubmitting(true);
+    setDialogError('');
+    setError('');
+    setMessage('');
+
+    try {
+      if (passwordDialog.action === 'unbind-email') {
+        await unbindEmail(confirmationPassword);
+        await auth.refreshMe();
+        setMessage('邮箱已解绑');
+      }
+      if (passwordDialog.action === 'unbind-phone') {
+        await unbindPhone(confirmationPassword);
+        await auth.refreshMe();
+        setMessage('手机号已解绑');
+      }
+      if (passwordDialog.action === 'revoke-all') {
+        await revokeAllSessions(confirmationPassword);
+        setPasswordDialog(null);
+        setConfirmationPassword('');
+        await auth.logout();
+        return;
+      }
+      setPasswordDialog(null);
+      setConfirmationPassword('');
+    } catch (err) {
+      setDialogError(errorMessage(err));
+    } finally {
+      setDialogSubmitting(false);
+    }
   }
 
   async function run(action: () => Promise<void>) {
@@ -335,6 +400,66 @@ export function SecurityPage() {
           </button>
         </div>
       </section>
+
+      {passwordDialog ? (
+        <div className="modal-backdrop" role="presentation" onMouseDown={closePasswordDialog}>
+          <section
+            className="confirm-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="password-dialog-title"
+            aria-describedby="password-dialog-description"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <form
+              className="form-stack"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleConfirmPasswordDialog();
+              }}
+            >
+              <div className="confirm-dialog__header">
+                <div>
+                  <p className="eyebrow">安全确认</p>
+                  <h2 id="password-dialog-title">{passwordDialog.title}</h2>
+                </div>
+                <button className="icon-button" onClick={closePasswordDialog} type="button" aria-label="关闭确认弹窗" disabled={dialogSubmitting}>
+                  <X size={17} />
+                </button>
+              </div>
+              <p id="password-dialog-description" className="confirm-dialog__description">
+                {passwordDialog.description}
+              </p>
+              <label className="field">
+                <span>当前密码</span>
+                <div className="field__control">
+                  <KeyRound size={17} />
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={confirmationPassword}
+                    onChange={(event) => setConfirmationPassword(event.target.value)}
+                    autoFocus
+                  />
+                </div>
+              </label>
+              {dialogError ? <p className="form-error">{dialogError}</p> : null}
+              <div className="dialog-actions">
+                <button className="button-link" onClick={closePasswordDialog} type="button" disabled={dialogSubmitting}>
+                  取消
+                </button>
+                <button
+                  className={passwordDialog.danger ? 'primary-button primary-button--danger' : 'primary-button'}
+                  disabled={dialogSubmitting || !confirmationPassword}
+                  type="submit"
+                >
+                  {dialogSubmitting ? '处理中' : passwordDialog.confirmLabel}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }

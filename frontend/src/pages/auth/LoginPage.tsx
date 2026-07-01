@@ -1,8 +1,9 @@
-import { Eye, EyeOff, KeyRound, Mail, MessageCircle, PawPrint, Smartphone } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ArrowRight, Eye, EyeOff, KeyRound, Mail, Smartphone } from 'lucide-react';
+import { type KeyboardEvent, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { AuthAnimalStage } from '../../features/auth-animal-stage/ui/AuthAnimalStage';
+import { CaptchaField, VerificationCodeField } from '../../features/auth-form/AuthFields';
 import { useCaptcha } from '../../features/auth-form/useCaptcha';
 import { useCountdown } from '../../features/auth-form/useCountdown';
 import { useAuth } from '../../app/useAuth';
@@ -18,6 +19,7 @@ export function LoginPage() {
   const auth = useAuth();
   const captcha = useCaptcha();
   const countdown = useCountdown();
+  const activeTabRef = useRef<LoginTab>('phone');
   const [tab, setTab] = useState<LoginTab>('phone');
   const [phone, setPhone] = useState('');
   const [smsCode, setSmsCode] = useState('');
@@ -43,6 +45,33 @@ export function LoginPage() {
     return 'idle';
   }, [focusField, passwordVisible]);
 
+  function switchTab(nextTab: LoginTab) {
+    activeTabRef.current = nextTab;
+    setTab(nextTab);
+    setFocusField(null);
+    setError('');
+  }
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const order: LoginTab[] = ['phone', 'email'];
+    const currentIndex = order.indexOf(tab);
+    let nextTab: LoginTab | null = null;
+
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextTab = order[(currentIndex + 1) % order.length];
+    }
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextTab = order[(currentIndex - 1 + order.length) % order.length];
+    }
+    if (!nextTab) {
+      return;
+    }
+
+    event.preventDefault();
+    switchTab(nextTab);
+    window.setTimeout(() => document.getElementById(`login-tab-${nextTab}`)?.focus(), 0);
+  }
+
   async function handleSendSMS() {
     setError('');
     if (!captcha.captcha?.captchaId || !captcha.captchaCode) {
@@ -61,7 +90,9 @@ export function LoginPage() {
       countdown.start(data.cooldownSeconds);
       await captcha.reloadCaptcha();
     } catch (err) {
-      setError(errorMessage(err));
+      if (activeTabRef.current === 'phone') {
+        setError(errorMessage(err));
+      }
       await captcha.reloadCaptcha();
     } finally {
       setSending(false);
@@ -83,7 +114,9 @@ export function LoginPage() {
         navigate('/');
       }
     } catch (err) {
-      setError(errorMessage(err));
+      if (activeTabRef.current === 'phone') {
+        setError(errorMessage(err));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -102,6 +135,9 @@ export function LoginPage() {
       await auth.loginWithAuth(data);
       navigate('/');
     } catch (err) {
+      if (activeTabRef.current !== 'email') {
+        return;
+      }
       if (err instanceof ApiError && err.data && typeof err.data === 'object' && 'captchaRequired' in err.data) {
         setNeedEmailCaptcha(true);
         await captcha.reloadCaptcha();
@@ -122,24 +158,28 @@ export function LoginPage() {
           <p>继续完善你的适配测评、宠物档案和照护记录。</p>
         </div>
 
-        <div className="segmented" role="tablist" aria-label="登录方式">
+        <div className="segmented" role="tablist" aria-label="账号方式" onKeyDown={handleTabKeyDown}>
           <button
+            id="login-tab-phone"
+            role="tab"
+            aria-controls="login-panel-phone"
+            aria-selected={tab === 'phone'}
             className={tab === 'phone' ? 'segmented__item segmented__item--active' : 'segmented__item'}
-            onClick={() => {
-              setTab('phone');
-              setFocusField(null);
-            }}
+            onClick={() => switchTab('phone')}
+            tabIndex={tab === 'phone' ? 0 : -1}
             type="button"
           >
             <Smartphone size={16} />
             手机号
           </button>
           <button
+            id="login-tab-email"
+            role="tab"
+            aria-controls="login-panel-email"
+            aria-selected={tab === 'email'}
             className={tab === 'email' ? 'segmented__item segmented__item--active' : 'segmented__item'}
-            onClick={() => {
-              setTab('email');
-              setFocusField(null);
-            }}
+            onClick={() => switchTab('email')}
+            tabIndex={tab === 'email' ? 0 : -1}
             type="button"
           >
             <Mail size={16} />
@@ -148,7 +188,16 @@ export function LoginPage() {
         </div>
 
         {tab === 'phone' ? (
-          <form className="form-stack" onSubmit={(event) => event.preventDefault()}>
+          <form
+            id="login-panel-phone"
+            className="form-stack"
+            role="tabpanel"
+            aria-labelledby="login-tab-phone"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handlePhoneLogin();
+            }}
+          >
             <label className="field">
               <span>手机号</span>
               <div className="field__control">
@@ -167,24 +216,24 @@ export function LoginPage() {
               </div>
             </label>
             <CaptchaField captchaHook={captcha} />
-            <label className="field">
-              <span>短信验证码</span>
-              <div className="field__control field__control--action">
-                <MessageCircle size={17} />
-                <input value={smsCode} onChange={(event) => setSmsCode(event.target.value)} placeholder="6 位验证码" inputMode="numeric" />
-                <button className="inline-action" disabled={sending || countdown.seconds > 0} onClick={handleSendSMS} type="button">
-                  {countdown.seconds > 0 ? `${countdown.seconds}s` : '发送'}
-                </button>
-              </div>
-            </label>
+            <VerificationCodeField countdownSeconds={countdown.seconds} kind="sms" onChange={setSmsCode} onSend={handleSendSMS} sending={sending} value={smsCode} />
             {error ? <p className="form-error">{error}</p> : null}
-            <button className="primary-button" disabled={submitting} onClick={handlePhoneLogin} type="button">
-              <PawPrint size={18} />
+            <button className="primary-button" disabled={submitting} type="submit">
+              <ArrowRight size={18} />
               {submitting ? '登录中' : '登录 / 注册'}
             </button>
           </form>
         ) : (
-          <form className="form-stack" onSubmit={(event) => event.preventDefault()}>
+          <form
+            id="login-panel-email"
+            className="form-stack"
+            role="tabpanel"
+            aria-labelledby="login-tab-email"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleEmailLogin();
+            }}
+          >
             <label className="field">
               <span>邮箱</span>
               <div className="field__control">
@@ -216,7 +265,7 @@ export function LoginPage() {
                     setFocusField('password');
                     setPassword(event.target.value);
                   }}
-                  placeholder="输入密码"
+                  placeholder="8-64 位密码"
                 />
                 <button
                   className="icon-button"
@@ -234,8 +283,8 @@ export function LoginPage() {
             </label>
             {needEmailCaptcha ? <CaptchaField captchaHook={captcha} /> : null}
             {error ? <p className="form-error">{error}</p> : null}
-            <button className="primary-button" disabled={submitting} onClick={handleEmailLogin} type="button">
-              <PawPrint size={18} />
+            <button className="primary-button" disabled={submitting} type="submit">
+              <ArrowRight size={18} />
               {submitting ? '登录中' : '登录'}
             </button>
           </form>
@@ -247,22 +296,6 @@ export function LoginPage() {
         </div>
       </section>
     </main>
-  );
-}
-
-function CaptchaField({ captchaHook }: { captchaHook: ReturnType<typeof useCaptcha> }) {
-  return (
-    <label className="field">
-      <span>图片验证码</span>
-      <div className="captcha-row">
-        <div className="field__control">
-          <input value={captchaHook.captchaCode} onChange={(event) => captchaHook.setCaptchaCode(event.target.value)} placeholder="输入图中字符" />
-        </div>
-        <button className="captcha-image" disabled={captchaHook.captchaLoading} onClick={captchaHook.reloadCaptcha} type="button" aria-label="刷新图片验证码">
-          {captchaHook.captcha ? <img src={captchaHook.captcha.imageBase64} alt="图片验证码" /> : '刷新'}
-        </button>
-      </div>
-    </label>
   );
 }
 

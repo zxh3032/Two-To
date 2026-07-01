@@ -1,8 +1,9 @@
-import { KeyRound, Mail, PawPrint, Send } from 'lucide-react';
+import { ArrowRight, KeyRound, Mail } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { AuthAnimalStage } from '../../features/auth-animal-stage/ui/AuthAnimalStage';
+import { CaptchaField, VerificationCodeField } from '../../features/auth-form/AuthFields';
 import { useCaptcha } from '../../features/auth-form/useCaptcha';
 import { useCountdown } from '../../features/auth-form/useCountdown';
 import { sendCode, verifyEmailRegister } from '../../shared/api/auth';
@@ -60,7 +61,7 @@ export function EmailRegisterPage() {
   }
 
   return (
-    <main className="auth-page">
+    <main className="auth-page auth-page--split">
       <AuthAnimalStage mode={focus === 'password' ? 'password' : focus === 'account' ? 'account' : 'idle'} />
       <section className="auth-panel" aria-labelledby="register-title">
         <div className="auth-panel__header">
@@ -69,7 +70,13 @@ export function EmailRegisterPage() {
           <p>先验证邮箱，下一步补齐基础资料。</p>
         </div>
 
-        <form className="form-stack" onSubmit={(event) => event.preventDefault()}>
+        <form
+          className="form-stack"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSubmit();
+          }}
+        >
           <label className="field">
             <span>邮箱</span>
             <div className="field__control">
@@ -84,30 +91,11 @@ export function EmailRegisterPage() {
               <input onFocus={() => setFocus('password')} onBlur={() => setFocus(null)} type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="8-64 位密码" />
             </div>
           </label>
-          <label className="field">
-            <span>图片验证码</span>
-            <div className="captcha-row">
-              <div className="field__control">
-                <input value={captcha.captchaCode} onChange={(event) => captcha.setCaptchaCode(event.target.value)} placeholder="输入图中字符" />
-              </div>
-              <button className="captcha-image" disabled={captcha.captchaLoading} onClick={captcha.reloadCaptcha} type="button" aria-label="刷新图片验证码">
-                {captcha.captcha ? <img src={captcha.captcha.imageBase64} alt="图片验证码" /> : '刷新'}
-              </button>
-            </div>
-          </label>
-          <label className="field">
-            <span>邮箱验证码</span>
-            <div className="field__control field__control--action">
-              <Send size={17} />
-              <input value={emailCode} onChange={(event) => setEmailCode(event.target.value)} placeholder="6 位验证码" inputMode="numeric" />
-              <button className="inline-action" disabled={sending || countdown.seconds > 0} onClick={handleSendCode} type="button">
-                {countdown.seconds > 0 ? `${countdown.seconds}s` : '发送'}
-              </button>
-            </div>
-          </label>
+          <CaptchaField captchaHook={captcha} />
+          <VerificationCodeField countdownSeconds={countdown.seconds} kind="email" onChange={setEmailCode} onSend={handleSendCode} sending={sending} value={emailCode} />
           {error ? <p className="form-error">{error}</p> : null}
-          <button className="primary-button" disabled={submitting} onClick={handleSubmit} type="button">
-            <PawPrint size={18} />
+          <button className="primary-button" disabled={submitting} type="submit">
+            <ArrowRight size={18} />
             {submitting ? '校验中' : '下一步'}
           </button>
         </form>
